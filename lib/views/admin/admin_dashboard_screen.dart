@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/theme_extensions.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../models/product.dart';
 import '../../providers/admin_provider.dart';
@@ -121,8 +122,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.scaffoldBg,
       appBar: AppBar(
+        backgroundColor: context.surfaceColor,
+        elevation: 0,
         title: Row(
           children: [
             Container(
@@ -138,16 +141,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Admin Management',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.textPrimary),
                 ),
                 Text(
                   'Shalimar Store Control Panel',
-                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                  style: TextStyle(fontSize: 10, color: context.textSecondary),
                 ),
               ],
             ),
@@ -233,81 +236,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   const SizedBox(height: 12),
 
-                  // Quick Action: Restore Whole Standard Catalogue
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.auto_stories_rounded, color: Color(0xFFC68400), size: 22),
-                        const SizedBox(width: 10),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Full Catalogue Quick-Loader',
-                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                'Reset or load 50+ pre-filled Kirana grocery items',
-                                style: TextStyle(fontSize: 11, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('Load Standard Catalogue?'),
-                                content: const Text(
-                                  'This will populate the store with 50+ popular Indian grocery items (Atta, Oil, Spices, Dairy, Snacks, Soaps).',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      catalogue.restoreStandardCatalogue();
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Catalogue populated successfully!'),
-                                          backgroundColor: AppColors.success,
-                                        ),
-                                      );
-                                    },
-                                    child: const Text('Load Catalogue'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                          child: const Text('Load All', style: TextStyle(fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
                   // Rounded Search Bar
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.surfaceColor,
                       borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: context.borderSubtle),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withOpacity(context.isDark ? 0.25 : 0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -316,13 +253,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: TextField(
                       controller: _searchController,
                       onChanged: (val) => setState(() => _searchFilter = val),
+                      style: TextStyle(color: context.textPrimary, fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Search 1,000+ items by name, unit, category...',
-                        hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                        hintStyle: TextStyle(fontSize: 13, color: context.textSecondary),
                         prefixIcon: const Icon(Icons.search, size: 22, color: AppColors.primary),
                         suffixIcon: _searchFilter.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear, size: 18),
+                                icon: Icon(Icons.clear, size: 18, color: context.textSecondary),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() => _searchFilter = '');
@@ -397,7 +335,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
                       itemCount: catalogue.categories.length + 1,
-                      separatorBuilder: (_, __) => const SizedBox(width: 6),
+                      separatorBuilder: (_, _) => const SizedBox(width: 6),
                       itemBuilder: (context, index) {
                         if (index == catalogue.categories.length) {
                           // "+ Add Category" Chip
@@ -429,7 +367,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  color: isSelected ? Colors.white : AppColors.darkText,
+                                  color: isSelected ? Colors.white : context.textPrimary,
                                 ),
                               ),
                               if (outCount > 0 && cat != 'All') ...[
@@ -454,11 +392,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                           selected: isSelected,
                           selectedColor: AppColors.primary,
-                          backgroundColor: Colors.white,
+                          backgroundColor: context.surfaceColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                             side: BorderSide(
-                              color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                              color: isSelected ? AppColors.primary : context.borderSubtle,
                             ),
                           ),
                           onSelected: (selected) {
@@ -527,15 +465,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: context.surfaceColor,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: item.inStock ? Colors.grey.shade200 : Colors.red.shade300,
+                              color: item.inStock ? context.borderSubtle : Colors.red.shade400,
                               width: item.inStock ? 1 : 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.02),
+                                color: Colors.black.withOpacity(context.isDark ? 0.25 : 0.02),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -548,7 +486,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 width: 50,
                                 height: 50,
                                 decoration: BoxDecoration(
-                                  color: AppColors.surfaceVariant,
+                                  color: context.isDark ? const Color(0xFF262626) : AppColors.surfaceVariant,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: ClipRRect(
@@ -568,7 +506,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
-                                        color: item.inStock ? AppColors.darkText : Colors.grey.shade600,
+                                        color: item.inStock ? context.textPrimary : context.textSecondary,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -576,7 +514,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     const SizedBox(height: 2),
                                     Text(
                                       '${item.category} • ${item.unit}',
-                                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                      style: TextStyle(fontSize: 11, color: context.textSecondary),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -597,7 +535,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 children: [
                                   Switch(
                                     value: item.inStock,
-                                    activeColor: AppColors.success,
+                                    activeThumbColor: AppColors.success,
                                     inactiveThumbColor: Colors.red,
                                     onChanged: (_) => catalogue.toggleStock(item.id),
                                   ),
@@ -645,18 +583,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
           color: isSelected
               ? Colors.white
-              : (isDanger ? Colors.red.shade700 : AppColors.darkText),
+              : (isDanger ? Colors.red : context.textPrimary),
         ),
       ),
       selected: isSelected,
       selectedColor: isDanger ? Colors.red : AppColors.primary,
-      backgroundColor: isDanger ? Colors.red.shade50 : Colors.white,
+      backgroundColor: isDanger ? (context.isDark ? const Color(0xFF2B1212) : Colors.red.shade50) : context.surfaceColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
           color: isSelected
               ? (isDanger ? Colors.red : AppColors.primary)
-              : (isDanger ? Colors.red.shade200 : Colors.grey.shade300),
+              : (isDanger ? Colors.red.shade400 : context.borderSubtle),
         ),
       ),
       onSelected: (selected) {
@@ -677,25 +615,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.success.withOpacity(0.08),
+          color: context.isDark ? const Color(0xFF142918) : AppColors.success.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.success.withOpacity(0.3)),
+          border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22),
-            SizedBox(width: 10),
+            const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     '100% Stock Availability',
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.success),
                   ),
                   Text(
                     'All products across all categories are currently in stock.',
-                    style: TextStyle(fontSize: 11, color: Colors.black54),
+                    style: TextStyle(fontSize: 11, color: context.textSecondary),
                   ),
                 ],
               ),
@@ -707,9 +645,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
+        color: context.isDark ? const Color(0xFF261212) : Colors.red.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.shade200),
+        border: Border.all(color: context.isDark ? const Color(0xFF5E1B1B) : Colors.red.shade200),
       ),
       child: Column(
         children: [
@@ -887,12 +825,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: context.borderSubtle),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withOpacity(context.isDark ? 0.25 : 0.02),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -914,7 +852,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(height: 2),
           Text(
             title,
-            style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 10, color: context.textSecondary, fontWeight: FontWeight.w500),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -935,7 +873,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       return Image.network(
         imageUrl,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const Icon(
+        errorBuilder: (_, _, _) => const Icon(
           Icons.shopping_basket_outlined,
           size: 20,
           color: AppColors.primary,
@@ -947,7 +885,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       return Image.file(
         file,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const Icon(
+        errorBuilder: (_, _, _) => const Icon(
           Icons.shopping_basket_outlined,
           size: 20,
           color: AppColors.primary,

@@ -2,7 +2,7 @@
   <img src="assets/images/logo.png" width="140" alt="Shalimar Store Logo" />
 </p>
 
-<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.0.0)</h1>
+<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.1.0)</h1>
 
 <p align="center">
   <b>Official Dual-Mode Kirana & General Store Mobile Application</b><br>
@@ -10,13 +10,13 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v3.0.0-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-v3.1.0-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Firebase-Firestore%20Spark%20Tier-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
   <img src="https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Dart-3.13+-0175C2?logo=dart&logoColor=white" alt="Dart" />
   <img src="https://img.shields.io/badge/Typography-Plus%20Jakarta%20Sans-indigo" alt="Plus Jakarta Sans" />
-  <img src="https://img.shields.io/badge/Theme-Dynamic%20AMOLED%20System-darkgreen" alt="Dynamic AMOLED Theme" />
-  <img src="https://img.shields.io/badge/OTA-GitHub%20Releases%20Live-brightgreen" alt="OTA Updates" />
-  <img src="https://img.shields.io/badge/Architecture-Offline--First%20Clean-emerald" alt="Clean Architecture" />
+  <img src="https://img.shields.io/badge/Theme-AMOLED%20Dark%20%26%20Light-darkgreen" alt="Dynamic AMOLED Theme" />
+  <img src="https://img.shields.io/badge/OTA-In--App%20Direct%20Updates-brightgreen" alt="OTA Updates" />
   <img src="https://img.shields.io/badge/Android-Split%20ABI%20(v1--v4%20Signed)-success" alt="Android" />
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
 </p>
@@ -35,7 +35,21 @@ Established in **1988** by Mohammad Jamil, **Shalimar General Store** has been a
 
 ---
 
-## ✨ What's New in v3.0.0
+## 🚀 What's New in v3.1.0 (Firebase Cloud Sync & In-App Direct OTA Updates)
+
+- 📲 **In-App Direct OTA Updates:** Updates download directly inside the app with a streaming byte progress bar and automatically trigger Android's native package installer (`open_filex`). No external browser or Chrome redirects required.
+- ☁️ **Google Firebase Cloud Sync:** Full integration with Google Firebase Firestore (`shalimar-store`) on the Free Spark Tier. Products, stock levels, and prices sync in real time across owner and customer phones.
+- 🔔 **Dual-Tier Push & Local Notification Engine:**
+  - **"🔔 Notify Me When in Stock":** Out-of-stock items feature an interactive restock alert button subscribing customers to `restock_<productId>`.
+  - **Automatic Restock Alerts:** Toggling an item back in stock in the Admin Panel immediately fires notifications to waiting customers.
+  - **Local Order Dispatch Alerts:** Native heads-up notifications confirm WhatsApp orders instantly.
+  - **Store Broadcast Announcements:** Topic subscription (`store_broadcast`) for deals and festival updates.
+- 🌓 **Complete AMOLED Dark Theme Overhaul:** All customer tabs, navigation docks, floating cart bars, search bars, and admin panels rewritten using adaptive semantic tokens for true `#121212` / `#1E1E1E` AMOLED aesthetics.
+- 🧹 **Production Admin Hardening:** Completely removed the demo "Quick-Loader" from Admin Dashboard so only real inventory is maintained.
+
+---
+
+## ✨ Features from v3.0.0
 
 - 🔍 **Interactive Product Detail View:** Tap any product card to expand into an immersive, dedicated product view featuring smooth `Hero` animations.
 - 🖼️ **Multi-Image Swipeable Carousel:** Explore items from every angle with a touch-friendly `PageView` carousel and real-time dot indicators.

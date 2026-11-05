@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_extensions.dart';
 import '../../../providers/catalogue_provider.dart';
 import '../../../providers/user_provider.dart';
 import '../../../widgets/product_card.dart';
@@ -20,7 +21,7 @@ class FavoritesTab extends StatelessWidget {
         .toList();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: favoriteProducts.isEmpty
             ? Center(
@@ -42,12 +43,12 @@ class FavoritesTab extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      const Text(
+                      Text(
                         'Your Wishlist is Empty',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.darkText,
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -56,7 +57,7 @@ class FavoritesTab extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade600,
+                          color: context.textSecondary,
                           height: 1.4,
                         ),
                       ),
@@ -79,7 +80,7 @@ class FavoritesTab extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Column(
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
@@ -87,13 +88,13 @@ class FavoritesTab extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.darkText,
+                                  color: context.textPrimary,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
                                 'Quick access to your regular items',
-                                style: TextStyle(fontSize: 12, color: Colors.grey),
+                                style: TextStyle(fontSize: 12, color: context.textSecondary),
                               ),
                             ],
                           ),

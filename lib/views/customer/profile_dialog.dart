@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/theme_extensions.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/whatsapp_helper.dart';
 import '../../providers/cart_provider.dart';
@@ -66,6 +67,7 @@ class _ProfileDialogState extends State<ProfileDialog> {
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: context.surfaceColor,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
         constraints: BoxConstraints(
@@ -97,16 +99,16 @@ class _ProfileDialogState extends State<ProfileDialog> {
                     children: [
                       Text(
                         user.username.isNotEmpty ? user.username : 'Shalimar Customer',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.darkText,
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
-                      const Text(
+                      Text(
                         'Valued Shalimar Store Member',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        style: TextStyle(fontSize: 12, color: context.textSecondary),
                       ),
                     ],
                   ),
@@ -164,7 +166,7 @@ class _ProfileDialogState extends State<ProfileDialog> {
                       labelColor: AppColors.primary,
                       indicatorColor: AppColors.primary,
                       indicatorWeight: 3,
-                      unselectedLabelColor: Colors.grey,
+                      unselectedLabelColor: context.textSecondary,
                       labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                       tabs: [
                         Tab(text: 'Last Orders (${user.pastOrders.length})'),
@@ -177,24 +179,24 @@ class _ProfileDialogState extends State<ProfileDialog> {
                         children: [
                           // Past Orders List
                           user.pastOrders.isEmpty
-                              ? const Center(
+                              ? Center(
                                   child: Text(
                                     'No past orders yet.\nOrders sent via WhatsApp will show here!',
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(color: Colors.grey, height: 1.4),
+                                    style: TextStyle(color: context.textSecondary, height: 1.4),
                                   ),
                                 )
                               : ListView.separated(
                                   itemCount: user.pastOrders.length,
-                                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                                   itemBuilder: (context, index) {
                                     final order = user.pastOrders[index];
                                     return Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: Colors.grey.shade50,
+                                        color: context.isDark ? const Color(0xFF262626) : Colors.grey.shade50,
                                         borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(color: Colors.grey.shade200),
+                                        border: Border.all(color: context.borderSubtle),
                                       ),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,9 +206,10 @@ class _ProfileDialogState extends State<ProfileDialog> {
                                             children: [
                                               Text(
                                                 'Order #${order.id}',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 13,
+                                                  color: context.textPrimary,
                                                 ),
                                               ),
                                               Text(
@@ -288,7 +291,7 @@ class _ProfileDialogState extends State<ProfileDialog> {
                                 )
                               : ListView.separated(
                                   itemCount: favProducts.length,
-                                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                                   itemBuilder: (context, index) {
                                     final p = favProducts[index];
                                     return ListTile(

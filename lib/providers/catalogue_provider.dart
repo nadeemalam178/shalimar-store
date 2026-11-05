@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/product.dart';
+import '../services/cloud_sync_service.dart';
+import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
 class CatalogueProvider with ChangeNotifier {
@@ -47,6 +50,20 @@ class CatalogueProvider with ChangeNotifier {
     _products = await StorageService.loadProducts();
     _customCategories = StorageService.loadCustomCategories();
     _isLoading = false;
+    notifyListeners();
+
+    // Attach real-time cloud stream listener
+    CloudSyncService.startLiveCatalogueListener(
+      onCatalogueUpdated: (cloudProducts) {
+        _syncFromCloud(cloudProducts);
+      },
+    );
+  }
+
+  void _syncFromCloud(List<Product> cloudProducts) {
+    if (cloudProducts.isEmpty) return;
+    _products = cloudProducts;
+    StorageService.saveProducts(_products);
     notifyListeners();
   }
 
@@ -102,6 +119,7 @@ class CatalogueProvider with ChangeNotifier {
     _products.insert(0, newProduct);
     await StorageService.saveProducts(_products);
     notifyListeners();
+    unawaited(CloudSyncService.syncProductToCloud(newProduct));
   }
 
   Future<void> updateProduct(Product updated) async {
@@ -110,6 +128,7 @@ class CatalogueProvider with ChangeNotifier {
       _products[index] = updated;
       await StorageService.saveProducts(_products);
       notifyListeners();
+      unawaited(CloudSyncService.syncProductToCloud(updated));
     }
   }
 
@@ -117,9 +136,18 @@ class CatalogueProvider with ChangeNotifier {
     final index = _products.indexWhere((p) => p.id == productId);
     if (index != -1) {
       final current = _products[index];
-      _products[index] = current.copyWith(inStock: !current.inStock);
+      final willBeInStock = !current.inStock;
+      final updated = current.copyWith(inStock: willBeInStock);
+      _products[index] = updated;
       await StorageService.saveProducts(_products);
       notifyListeners();
+
+      // If toggled back to "In Stock", trigger a restock notification
+      if (willBeInStock) {
+        NotificationService.showRestockNotification(updated);
+      }
+
+      unawaited(CloudSyncService.syncProductToCloud(updated));
     }
   }
 
@@ -127,6 +155,7 @@ class CatalogueProvider with ChangeNotifier {
     _products.removeWhere((p) => p.id == productId);
     await StorageService.saveProducts(_products);
     notifyListeners();
+    unawaited(CloudSyncService.deleteProductFromCloud(productId));
   }
 
   Future<void> restoreStandardCatalogue() async {
@@ -135,6 +164,17 @@ class CatalogueProvider with ChangeNotifier {
     _products = await StorageService.loadStandardKiranaCatalogue();
     _isLoading = false;
     notifyListeners();
+    unawaited(CloudSyncService.pushFullCatalogueToCloud(_products));
+  }
+
+  Future<int> syncAllToCloud() async {
+    return await CloudSyncService.pushFullCatalogueToCloud(_products);
+  }
+
+  @override
+  void dispose() {
+    CloudSyncService.stopLiveCatalogueListener();
+    super.dispose();
   }
 }
 

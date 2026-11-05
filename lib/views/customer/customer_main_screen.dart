@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/theme_extensions.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/bottom_deck_dock.dart';
@@ -61,12 +62,12 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.scaffoldBg,
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         toolbarHeight: 64,
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: context.surfaceColor,
         titleSpacing: 16,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -83,8 +84,9 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant.withAlpha(120),
+                  color: context.isDark ? const Color(0xFF262626) : AppColors.surfaceVariant.withAlpha(120),
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: context.borderSubtle),
                 ),
                 child: Row(
                   children: [
@@ -104,16 +106,16 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Welcome,',
-                          style: TextStyle(fontSize: 10, color: Colors.grey),
+                          style: TextStyle(fontSize: 10, color: context.textSecondary),
                         ),
                         Text(
                           user.username.isNotEmpty ? user.username : 'Customer',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.darkText,
+                            color: context.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -159,10 +161,10 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                 decoration: BoxDecoration(
                   color: admin.isLoggedIn
                       ? AppColors.primary.withAlpha(30)
-                      : Colors.grey.shade100,
+                      : (context.isDark ? const Color(0xFF262626) : Colors.grey.shade100),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: admin.isLoggedIn ? AppColors.primary : Colors.grey.shade300,
+                    color: admin.isLoggedIn ? AppColors.primary : context.borderSubtle,
                   ),
                 ),
                 child: Row(
@@ -170,7 +172,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                     Icon(
                       admin.isLoggedIn ? Icons.admin_panel_settings : Icons.lock_outline_rounded,
                       size: 16,
-                      color: admin.isLoggedIn ? AppColors.primary : Colors.grey.shade700,
+                      color: admin.isLoggedIn ? AppColors.primary : context.textSecondary,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -178,7 +180,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: admin.isLoggedIn ? AppColors.primary : Colors.grey.shade700,
+                        color: admin.isLoggedIn ? AppColors.primary : context.textSecondary,
                       ),
                     ),
                   ],

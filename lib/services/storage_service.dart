@@ -124,5 +124,37 @@ class StorageService {
   static Future<void> saveCustomCategories(List<String> categories) async {
     await _prefs?.setStringList(AppConstants.keyCustomCategories, categories);
   }
+
+  // --- Push Notification Restock Subscriptions ---
+  static const String keySubscribedRestocks = 'subscribed_restocks_list';
+
+  static List<String> loadSubscribedRestocks() {
+    return _prefs?.getStringList(keySubscribedRestocks) ?? [];
+  }
+
+  static Future<void> saveSubscribedRestocks(List<String> ids) async {
+    await _prefs?.setStringList(keySubscribedRestocks, ids);
+  }
+
+  static bool isSubscribedToRestock(String productId) {
+    final list = loadSubscribedRestocks();
+    return list.contains(productId);
+  }
+
+  static Future<void> addRestockSubscription(String productId) async {
+    final list = loadSubscribedRestocks();
+    if (!list.contains(productId)) {
+      list.add(productId);
+      await saveSubscribedRestocks(list);
+    }
+  }
+
+  static Future<void> removeRestockSubscription(String productId) async {
+    final list = loadSubscribedRestocks();
+    if (list.contains(productId)) {
+      list.remove(productId);
+      await saveSubscribedRestocks(list);
+    }
+  }
 }
 

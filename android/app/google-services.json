@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "741135454571",
+    "project_id": "shalimar-store",
+    "storage_bucket": "shalimar-store.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741135454571:android:3b200e8f5bb84acb127c2e",
+        "android_client_info": {
+          "package_name": "com.shalimarstore.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRDdaIHuuL61c4HyDkSgovdmCAjfpx29k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

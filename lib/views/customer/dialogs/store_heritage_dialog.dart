@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/theme_extensions.dart';
 
 class StoreHeritageDialog extends StatelessWidget {
   const StoreHeritageDialog({super.key});
@@ -34,11 +35,12 @@ class StoreHeritageDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surfaceColor,
           borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: context.borderSubtle),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.18),
+              color: Colors.black.withOpacity(context.isDark ? 0.35 : 0.18),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -134,12 +136,12 @@ class StoreHeritageDialog extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // About Description
-                      const Text(
+                      Text(
                         'About Shalimar Store',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.darkText,
+                          color: context.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -147,7 +149,7 @@ class StoreHeritageDialog extends StatelessWidget {
                         'Founded in 1988 by Mohammad Jamil, Shalimar General Store is a heritage neighborhood grocery landmark on Ashok Rajpath, Patna. Known for uncompromising quality, authentic spices, pure oils, fresh daily dairy, and personalized doorstep delivery.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade700,
+                          color: context.textSecondary,
                           height: 1.5,
                         ),
                       ),
@@ -158,30 +160,35 @@ class StoreHeritageDialog extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceVariant.withAlpha(120),
+                          color: context.isDark ? const Color(0xFF262626) : AppColors.surfaceVariant.withAlpha(120),
                           borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: context.borderSubtle),
                         ),
                         child: Column(
                           children: [
                             _buildInfoRow(
+                              context,
                               Icons.location_on_rounded,
                               'Location',
                               AppConstants.storeAddress,
                             ),
-                            const Divider(height: 16),
+                            Divider(height: 16, color: context.borderSubtle),
                             _buildInfoRow(
+                              context,
                               Icons.near_me_rounded,
                               'Landmark',
                               AppConstants.storeLandmark,
                             ),
-                            const Divider(height: 16),
+                            Divider(height: 16, color: context.borderSubtle),
                             _buildInfoRow(
+                              context,
                               Icons.access_time_filled_rounded,
                               'Working Hours',
                               AppConstants.storeHours,
                             ),
-                            const Divider(height: 16),
+                            Divider(height: 16, color: context.borderSubtle),
                             _buildInfoRow(
+                              context,
                               Icons.qr_code_2_rounded,
                               'Official UPI',
                               AppConstants.ownerUpiId,
@@ -250,7 +257,7 @@ class StoreHeritageDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
+  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -262,12 +269,12 @@ class StoreHeritageDialog extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.textSecondary),
               ),
               const SizedBox(height: 1),
               Text(
                 value,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.darkText),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.textPrimary),
               ),
             ],
           ),

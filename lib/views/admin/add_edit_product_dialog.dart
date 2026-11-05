@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_extensions.dart';
 import '../../models/product.dart';
 import '../../providers/catalogue_provider.dart';
 
@@ -172,7 +173,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                   : Image.network(
                       _imageCtrl.text,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Center(
+                      errorBuilder: (_, _, _) => const Center(
                         child: Icon(Icons.broken_image, size: 36, color: Colors.grey),
                       ),
                     ),
@@ -275,6 +276,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: context.surfaceColor,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
         constraints: BoxConstraints(
@@ -282,6 +284,11 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           maxWidth: 480,
         ),
         padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: context.surfaceColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: context.borderSubtle),
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -293,19 +300,19 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                 children: [
                   Text(
                     isEditing ? 'Edit Product' : 'Add New Product',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.darkText,
+                      color: context.textPrimary,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: context.textSecondary),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const Divider(height: 16),
+              Divider(height: 16, color: context.borderSubtle),
 
               Expanded(
                 child: SingleChildScrollView(
@@ -340,7 +347,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
 
                       // Category Dropdown
                       DropdownButtonFormField<String>(
-                        value: _category,
+                        initialValue: _category,
                         decoration: const InputDecoration(labelText: 'Category'),
                         items: _commonCategories.map((c) {
                           return DropdownMenuItem(value: c, child: Text(c));
@@ -419,7 +426,8 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                             color: _inStock ? AppColors.success : Colors.red,
                           ),
                         ),
-                        activeColor: AppColors.success,
+                        activeTrackColor: AppColors.success.withValues(alpha: 0.5),
+                        activeThumbColor: AppColors.success,
                         value: _inStock,
                         onChanged: (val) => setState(() => _inStock = val),
                       ),

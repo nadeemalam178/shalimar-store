@@ -8,6 +8,8 @@ import 'providers/cart_provider.dart';
 import 'providers/catalogue_provider.dart';
 import 'providers/user_provider.dart';
 import 'services/admin_auth_service.dart';
+import 'services/firebase_config.dart';
+import 'services/notification_service.dart';
 import 'services/storage_service.dart';
 import 'views/splash/splash_screen.dart';
 
@@ -33,6 +35,8 @@ void main() async {
   // Initialize offline-first persistent services
   await StorageService.init();
   await AdminAuthService.init();
+  await FirebaseConfig.initialize();
+  await NotificationService.init();
 
   runApp(const ShalimarStoreApp());
 }

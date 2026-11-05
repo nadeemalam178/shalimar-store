@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/theme_extensions.dart';
 import '../../providers/admin_provider.dart';
 import '../../services/admin_auth_service.dart';
 
@@ -94,9 +95,15 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: context.surfaceColor,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 440),
         padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: context.surfaceColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: context.borderSubtle),
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -105,29 +112,29 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Store & Admin Settings',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.darkText,
+                      color: context.textPrimary,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: context.textSecondary),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const Divider(height: 16),
+              Divider(height: 16, color: context.borderSubtle),
 
               // Store contact summary
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: context.isDark ? const Color(0xFF262626) : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: context.borderSubtle),
                 ),
                 child: Column(
                   children: [
@@ -135,8 +142,8 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
                       children: [
                         const Icon(Icons.phone, size: 16, color: AppColors.primary),
                         const SizedBox(width: 8),
-                        const Text('Owner Phone / WhatsApp: ', style: TextStyle(fontSize: 12)),
-                        Text(AppConstants.ownerPhone, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text('Owner Phone / WhatsApp: ', style: TextStyle(fontSize: 12, color: context.textSecondary)),
+                        Text(AppConstants.ownerPhone, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary)),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -144,8 +151,8 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
                       children: [
                         const Icon(Icons.account_balance_wallet, size: 16, color: Color(0xFFC68400)),
                         const SizedBox(width: 8),
-                        const Text('Official Store UPI: ', style: TextStyle(fontSize: 12)),
-                        Text(AppConstants.ownerUpiId, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text('Official Store UPI: ', style: TextStyle(fontSize: 12, color: context.textSecondary)),
+                        Text(AppConstants.ownerUpiId, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary)),
                       ],
                     ),
                   ],

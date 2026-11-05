@@ -5,11 +5,13 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/theme_extensions.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/whatsapp_helper.dart';
 import '../../../models/order_model.dart';
 import '../../../providers/cart_provider.dart';
 import '../../../providers/user_provider.dart';
+import '../../../services/notification_service.dart';
 
 class CartTab extends StatefulWidget {
   final VoidCallback onBrowseHome;
@@ -116,6 +118,7 @@ class _CartTabState extends State<CartTab> {
         deliveryAddress: address,
       );
       await user.addOrder(newOrder);
+      await NotificationService.showOrderPlacedNotification(newOrder.id, totalAmount);
 
       // Clear cart
       cart.clearCart();
@@ -166,7 +169,7 @@ class _CartTabState extends State<CartTab> {
 
     if (cart.totalItemCount == 0) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.scaffoldBg,
         body: SafeArea(
           child: Center(
             child: Padding(
@@ -187,12 +190,12 @@ class _CartTabState extends State<CartTab> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Your Cart is Empty',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.darkText,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -201,7 +204,7 @@ class _CartTabState extends State<CartTab> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey.shade600,
+                      color: context.textSecondary,
                       height: 1.4,
                     ),
                   ),
@@ -220,7 +223,7 @@ class _CartTabState extends State<CartTab> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -232,12 +235,12 @@ class _CartTabState extends State<CartTab> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'My Shopping Cart',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.darkText,
+                      color: context.textPrimary,
                     ),
                   ),
                   TextButton.icon(
@@ -261,17 +264,18 @@ class _CartTabState extends State<CartTab> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: cart.itemList.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final item = cart.itemList[index];
                   return Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.surfaceColor,
                       borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: context.borderSubtle),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withOpacity(context.isDark ? 0.25 : 0.03),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -284,7 +288,7 @@ class _CartTabState extends State<CartTab> {
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceVariant,
+                            color: context.isDark ? const Color(0xFF262626) : AppColors.surfaceVariant,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: ClipRRect(
@@ -301,10 +305,10 @@ class _CartTabState extends State<CartTab> {
                             children: [
                               Text(
                                 item.product.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.darkText,
+                                  color: context.textPrimary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -314,7 +318,7 @@ class _CartTabState extends State<CartTab> {
                                 '${item.product.unit} • ${CurrencyFormatter.format(item.product.price)} each',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey.shade600,
+                                  color: context.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -333,8 +337,9 @@ class _CartTabState extends State<CartTab> {
                         // Quantity selector
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
+                            color: context.isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: context.borderSubtle),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -356,9 +361,10 @@ class _CartTabState extends State<CartTab> {
                                 ),
                                 child: Text(
                                   '${item.quantity}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                               ),
@@ -385,17 +391,18 @@ class _CartTabState extends State<CartTab> {
               const SizedBox(height: 18),
 
               // Delivery Details Form
-              const Text(
+              Text(
                 'Delivery Information',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.darkText,
+                  color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: _nameController,
+                style: TextStyle(color: context.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Your Name *',
                   prefixIcon: Icon(
@@ -408,6 +415,7 @@ class _CartTabState extends State<CartTab> {
               TextField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
+                style: TextStyle(color: context.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Contact Phone / WhatsApp *',
                   prefixIcon: Icon(
@@ -420,6 +428,7 @@ class _CartTabState extends State<CartTab> {
               TextField(
                 controller: _addressController,
                 maxLines: 2,
+                style: TextStyle(color: context.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Delivery Address & Landmark *',
                   prefixIcon: Icon(
@@ -431,6 +440,7 @@ class _CartTabState extends State<CartTab> {
               const SizedBox(height: 10),
               TextField(
                 controller: _noteController,
+                style: TextStyle(color: context.textPrimary),
                 decoration: const InputDecoration(
                   labelText: 'Special Note / Timing (Optional)',
                   prefixIcon: Icon(
@@ -446,11 +456,12 @@ class _CartTabState extends State<CartTab> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.surfaceColor,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: context.borderSubtle),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withOpacity(context.isDark ? 0.25 : 0.03),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -461,13 +472,13 @@ class _CartTabState extends State<CartTab> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Items Total (MRP)',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: context.textSecondary),
                         ),
                         Text(
                           CurrencyFormatter.format(cart.totalMrp),
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          style: TextStyle(fontWeight: FontWeight.w600, color: context.textPrimary),
                         ),
                       ],
                     ),
@@ -491,14 +502,14 @@ class _CartTabState extends State<CartTab> {
                       ),
                     ],
                     const SizedBox(height: 8),
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Store Delivery',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: context.textSecondary),
                         ),
-                        Text(
+                        const Text(
                           'FREE',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -507,16 +518,16 @@ class _CartTabState extends State<CartTab> {
                         ),
                       ],
                     ),
-                    const Divider(height: 20),
+                    Divider(height: 20, color: context.borderSubtle),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'To Pay',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.darkText,
+                            color: context.textPrimary,
                           ),
                         ),
                         Text(
@@ -611,9 +622,9 @@ class _CartTabState extends State<CartTab> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.amber.shade50,
+        color: context.isDark ? const Color(0xFF241E12) : Colors.amber.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.amber.shade300),
+        border: Border.all(color: context.isDark ? const Color(0xFFC68400) : Colors.amber.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -626,13 +637,13 @@ class _CartTabState extends State<CartTab> {
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Shalimar Store Official UPI ID',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
-                    color: Color(0xFF7F4E00),
+                    color: context.isDark ? const Color(0xFFFFD54F) : const Color(0xFF7F4E00),
                   ),
                 ),
               ),
@@ -644,24 +655,24 @@ class _CartTabState extends State<CartTab> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.isDark ? const Color(0xFF1B150A) : Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.amber.shade400),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(
                         Icons.copy,
                         size: 12,
-                        color: Color(0xFF7F4E00),
+                        color: context.isDark ? const Color(0xFFFFD54F) : const Color(0xFF7F4E00),
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
                         'Copy',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF7F4E00),
+                          color: context.isDark ? const Color(0xFFFFD54F) : const Color(0xFF7F4E00),
                         ),
                       ),
                     ],
@@ -678,9 +689,9 @@ class _CartTabState extends State<CartTab> {
               vertical: 8,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.isDark ? const Color(0xFF1B150A) : Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.shade200),
+              border: Border.all(color: context.isDark ? const Color(0xFF4A3B18) : Colors.amber.shade200),
             ),
             child: const SelectableText(
               AppConstants.ownerUpiId,
@@ -716,7 +727,7 @@ class _CartTabState extends State<CartTab> {
       return Image.network(
         imageUrl,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const Icon(
+        errorBuilder: (_, _, _) => const Icon(
           Icons.shopping_basket_outlined,
           color: AppColors.primary,
         ),
@@ -727,7 +738,7 @@ class _CartTabState extends State<CartTab> {
       return Image.file(
         file,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const Icon(
+        errorBuilder: (_, _, _) => const Icon(
           Icons.shopping_basket_outlined,
           color: AppColors.primary,
         ),

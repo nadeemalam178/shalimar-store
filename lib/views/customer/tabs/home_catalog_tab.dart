@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/theme_extensions.dart';
 import '../../../providers/catalogue_provider.dart';
 import '../../../services/update_service.dart';
 import '../../../widgets/product_card.dart';
+import '../dialogs/in_app_update_dialog.dart';
 import '../dialogs/store_heritage_dialog.dart';
 
 class HomeCatalogTab extends StatefulWidget {
@@ -47,16 +48,16 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
       children: [
         // Pinned / Freezed Rounded Search Bar on Top
         Container(
-          color: Colors.white,
+          color: context.scaffoldBg,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.surfaceVariant.withAlpha(120),
+              color: context.isDark ? const Color(0xFF222222) : AppColors.surfaceVariant.withAlpha(120),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: context.borderSubtle),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: Colors.black.withOpacity(context.isDark ? 0.2 : 0.02),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -65,13 +66,14 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
             child: TextField(
               controller: _searchController,
               onChanged: catalogue.setSearchQuery,
+              style: TextStyle(color: context.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Search 1,000+ atta, oil, spices, soaps...',
-                hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                hintStyle: TextStyle(fontSize: 13, color: context.textSecondary),
                 prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
                 suffixIcon: catalogue.searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
+                        icon: Icon(Icons.clear, size: 18, color: context.textSecondary),
                         onPressed: () {
                           _searchController.clear();
                           catalogue.setSearchQuery('');
@@ -217,17 +219,17 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'Categories',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.darkText,
+                                color: context.textPrimary,
                               ),
                             ),
                             Text(
                               '${catalogue.categories.length - 1} categories',
-                              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                              style: TextStyle(fontSize: 11, color: context.textSecondary),
                             ),
                           ],
                         ),
@@ -238,7 +240,7 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
                             itemCount: catalogue.categories.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            separatorBuilder: (_, _) => const SizedBox(width: 8),
                             itemBuilder: (context, index) {
                               final cat = catalogue.categories[index];
                               final isSelected = cat == catalogue.selectedCategory;
@@ -249,10 +251,10 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
                                   duration: const Duration(milliseconds: 200),
                                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? AppColors.primary : Colors.white,
+                                    color: isSelected ? AppColors.primary : context.surfaceColor,
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                                      color: isSelected ? AppColors.primary : context.borderSubtle,
                                     ),
                                     boxShadow: isSelected
                                         ? [
@@ -268,7 +270,7 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
                                     child: Text(
                                       cat,
                                       style: TextStyle(
-                                        color: isSelected ? Colors.white : Colors.grey.shade800,
+                                        color: isSelected ? Colors.white : context.textPrimary,
                                         fontSize: 12,
                                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                       ),
@@ -290,15 +292,15 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
                               catalogue.selectedCategory == 'All'
                                   ? 'All Daily Essentials'
                                   : catalogue.selectedCategory,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.darkText,
+                                color: context.textPrimary,
                               ),
                             ),
                             Text(
                               '${catalogue.filteredProducts.length} items',
-                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                              style: TextStyle(fontSize: 12, color: context.textSecondary),
                             ),
                           ],
                         ),
@@ -328,13 +330,13 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey.shade700,
+                              color: context.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Try searching for another item or reset filters',
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                            style: TextStyle(fontSize: 12, color: context.textSecondary),
                           ),
                         ],
                       ),
@@ -418,11 +420,12 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
                 ),
                 const SizedBox(height: 6),
                 InkWell(
-                  onTap: () async {
-                    final uri = Uri.parse(info.downloadUrl);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    }
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => InAppUpdateDialog(updateInfo: info),
+                    );
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(

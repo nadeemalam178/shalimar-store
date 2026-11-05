@@ -2,11 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_extensions.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../models/product.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/catalogue_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../services/notification_service.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -227,10 +229,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         color: isDark ? const Color(0xFF333333) : Colors.amber.shade200,
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.verified_rounded, color: Color(0xFFC68400), size: 20),
-                        SizedBox(width: 10),
+                        const Icon(Icons.verified_rounded, color: Color(0xFFC68400), size: 20),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,7 +242,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF7F4E00),
+                                  color: isDark ? const Color(0xFFFFD54F) : const Color(0xFF7F4E00),
                                 ),
                               ),
                               Text(
@@ -434,7 +436,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: products.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, idx) {
               final prod = products[idx];
               return _buildMiniProductCard(prod, isDark);
@@ -593,22 +595,87 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             const SizedBox(width: 16),
 
-            // Cart Action
+            // Cart Action or Restock Alert
             Expanded(
               child: !product.inStock
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade400,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Currently Out of Stock',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    )
+                  ? NotificationService.isSubscribed(product.id)
+                      ? InkWell(
+                          onTap: () async {
+                            await NotificationService.unsubscribeFromRestock(product.id);
+                            if (context.mounted) {
+                              setState(() {});
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Unsubscribed from restock alert.'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: context.isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: AppColors.success.withValues(alpha: 0.5)),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_outline, color: AppColors.success, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  '✓ Alert Active (Tap to Cancel)',
+                                  style: TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : InkWell(
+                          onTap: () async {
+                            await NotificationService.subscribeToRestock(product.id);
+                            if (context.mounted) {
+                              setState(() {});
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('🔔 We\'ll notify you when ${product.name} is back in stock!'),
+                                  backgroundColor: AppColors.primary,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFE65100), Color(0xFFFF9800)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFF9800).withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.notifications_active_outlined, color: Colors.white, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Notify Me When in Stock',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
                   : quantity == 0
                       ? ElevatedButton.icon(
                           onPressed: () => cart.addItem(product),

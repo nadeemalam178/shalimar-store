@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import '../core/constants/app_constants.dart';
 
 class ReleaseUpdateInfo {
@@ -60,7 +62,7 @@ class UpdateService {
         }
       }
 
-      final hasUpdate = _isVersionGreater(tagName, _currentVersionTag);
+      final hasUpdate = isVersionGreater(tagName, _currentVersionTag);
 
       return ReleaseUpdateInfo(
         hasUpdate: hasUpdate,
@@ -75,7 +77,7 @@ class UpdateService {
     }
   }
 
-  static bool _isVersionGreater(String remote, String current) {
+  static bool isVersionGreater(String remote, String current) {
     if (remote.isEmpty) return false;
     final rClean = remote.replaceAll(RegExp(r'[^0-9.]'), '');
     final cClean = current.replaceAll(RegExp(r'[^0-9.]'), '');
@@ -92,6 +94,68 @@ class UpdateService {
       if (rNum < cNum) return false;
     }
     return false;
+  }
+
+  /// Downloads the release APK directly inside the app with real-time byte progress
+  static Future<void> downloadApkWithProgress({
+    required String downloadUrl,
+    required void Function(double progress, int receivedBytes, int totalBytes) onProgress,
+    required void Function(String filePath) onComplete,
+    required void Function(String error) onError,
+  }) async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final filePath = '${tempDir.path}/shalimar_store_update.apk';
+      final file = File(filePath);
+      if (file.existsSync()) {
+        try {
+          file.deleteSync();
+        } catch (_) {}
+      }
+
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 15);
+      final request = await client.getUrl(Uri.parse(downloadUrl));
+      request.headers.set('User-Agent', 'ShalimarStore-FlutterApp');
+      final response = await request.close();
+
+      if (response.statusCode != 200) {
+        onError('Server returned status code: ${response.statusCode}');
+        return;
+      }
+
+      final totalBytes = response.contentLength;
+      int receivedBytes = 0;
+      final sink = file.openWrite();
+
+      await response.listen(
+        (chunk) {
+          sink.add(chunk);
+          receivedBytes += chunk.length;
+          final progress = totalBytes > 0 ? (receivedBytes / totalBytes) : 0.0;
+          onProgress(progress, receivedBytes, totalBytes);
+        },
+        onError: (e) {
+          sink.close();
+          onError(e.toString());
+        },
+        cancelOnError: true,
+      ).asFuture();
+
+      await sink.flush();
+      await sink.close();
+      onComplete(filePath);
+    } catch (e) {
+      onError(e.toString());
+    }
+  }
+
+  /// Directly launches the native Android package installer without external browser
+  static Future<OpenResult> installApk(String filePath) async {
+    return await OpenFilex.open(
+      filePath,
+      type: 'application/vnd.android.package-archive',
+    );
   }
 }
 
