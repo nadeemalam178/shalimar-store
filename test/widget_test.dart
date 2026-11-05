@@ -68,8 +68,8 @@ void main() {
 
       // Test secure owner credentials pass
       final isAuth = AdminAuthService.authenticate(
-        'shalimar_owner_1988',
-        r'Sh@l1m@r#1988$Sec!Pro9',
+        'Shalimar@1988',
+        r'Shal1mar@1988#',
       );
       expect(isAuth, isTrue);
       expect(AdminAuthService.isLoggedIn, isTrue);

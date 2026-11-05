@@ -215,3 +215,84 @@ flowchart TD
 - Run `flutter test`
 - Build test executable or APK.
 
+---
+
+### Phase 6: Keyboard Ergonomics, Memory & Performance Optimization, Dynamic System Theme & Credential Rotation (v2.1.0 Plan)
+
+#### 1. Admin Login Keyboard Ergonomics
+- **Issue:** When tapping Admin ID or Password inputs, Android's on-screen keyboard covers the modal card, obscuring the password field and "Unlock Admin Panel" button.
+- **Implementation Strategy:**
+  - In `lib/views/admin/admin_login_overlay.dart`, observe `MediaQuery.of(context).viewInsets.bottom`.
+  - Wrap the inner modal in a `SingleChildScrollView(physics: BouncingScrollPhysics())` wrapped by an `AnimatedPadding(padding: EdgeInsets.only(bottom: bottomInset))`.
+  - Dynamically align the card from center to upper-center when `bottomInset > 0` so the inputs and submit button stay unobstructed above the keyboard.
+
+#### 2. Memory Reduction & UI "Lightness" Optimization
+- **Issue:** The app feels heavy on mid-tier/budget mobile phones due to unconstrained bitmap decoding and heavy GPU blur passes.
+- **Implementation Strategy:**
+  - **Memory Caching (`cacheWidth` / `cacheHeight`):**
+    - Add `cacheWidth: 350`, `cacheHeight: 350` to `Image.network` and `ResizeImage(FileImage(file), width: 350)` in `ProductCard`, `CartTab`, `AdminDashboardScreen`, and dialogs.
+    - Slashes in-memory bitmap footprint from ~24MB uncompressed down to ~350KB per thumbnail (85%+ RAM reduction).
+  - **GPU Render Optimization:**
+    - Replace heavy `BackdropFilter(sigma: 10)` passes with a lightweight `sigma: 4` blur combined with a tinted scrim (`Colors.black54`) to prevent GPU thermal throttling and frame drops.
+  - **Render Virtualization & Repaint Boundaries:**
+    - Add `RepaintBoundary` to each `ProductCard` to isolate repaint areas while fast scrolling through 1,000+ items.
+  - **Add Items Photo Optimizer:**
+    - In `AddEditProductDialog`, constrain `imageQuality: 80`, `maxWidth: 800`, `maxHeight: 800` on `ImagePicker` so captured camera/gallery photos do not blow up storage or RAM.
+
+#### 3. Dynamic Android System Theme (Light / Dark Mode)
+- **Requirement:** Dynamic adaptation to Android system theme without any manual UI toggle.
+- **Implementation Strategy:**
+  - Build `AppTheme.darkTheme` with an AMOLED dark palette:
+    - Background: `#121212`, Surfaces/Cards: `#1E1E1E`, Brand Crimson: `#E53935`, Warm Gold: `#FFC107`, High-contrast text `#FFFFFF` / `#B0B0B0`.
+  - Update `lib/main.dart` with:
+    - `theme: AppTheme.lightTheme`
+    - `darkTheme: AppTheme.darkTheme`
+    - `themeMode: ThemeMode.system`
+  - Update widgets (`CustomerMainScreen`, `HomeCatalogTab`, `CartTab`, `FavoritesTab`, `ProductCard`, `AdminDashboardScreen`) to use theme tokens (`Theme.of(context).colorScheme.surface`, `Theme.of(context).cardColor`) instead of hardcoded `Colors.white` / `Colors.black`.
+
+#### 4. Credential Rotation
+- **New Credentials:**
+  - **Admin ID:** `Shalimar@1988`
+  - **Owner Password:** `Shal1mar@1988#`
+  - **SHA-256 Hash:** `e556e2eb347e2edd9af22f7298d0e19d66c6b21a6b416b46531fcdf2ae1c317b`
+- **Implementation Strategy:**
+  - Update `secure_credentials/OWNER_CREDENTIALS.txt`.
+  - Update `lib/core/constants/app_constants.dart` (`defaultAdminId`, `defaultAdminPasswordHash`).
+  - Update unit tests in `test/widget_test.dart` to verify the new credentials pass authentication.
+
+#### 5. Expandable Product Detail View with Multi-Image Gallery & Recommendation Carousels
+- **Requirement:** Tapping any product opens an expanded detail view showing multi-image gallery/swipe, comprehensive details, and two horizontal recommendation scroll rows:
+  1. **"More Like This"** (products from the same category)
+  2. **"More For You"** (popular cross-category essentials)
+- **Implementation Strategy:**
+  - **Data Model Extension:**
+    - In `lib/models/product.dart`, add `List<String> images`. If `images` is empty, automatically defaults to `[imageUrl]` for 100% backward compatibility.
+  - **Screen Implementation (`lib/views/customer/product_detail_screen.dart`):**
+    - **Hero Animation:** Fluid transition expanding the card image from the grid to the top of the detail screen.
+    - **Swipeable Image Carousel:** `PageView.builder` with dot indicators supporting multiple product photos (front, nutrition facts, back).
+    - **Rich Information Card:** Brand title, unit tag, stock status badge, selling price vs MRP discount pill, and full item description.
+    - **Sticky Bottom Action Bar:** Heart favorite toggle, item counter (`-` / `+`), and total price calculation with instant cart sync.
+    - **Recommendation Section 1 — "More Like This":**
+      - Horizontal scroll list displaying products sharing the same category (excluding current item).
+    - **Recommendation Section 2 — "More For You":**
+      - Horizontal scroll list displaying popular, high-rotation items from other categories (e.g. Oils, Dairy, Spices, Snacks).
+    - **Instant Navigation:** Tapping any recommended item seamlessly navigates to that product's detail screen.
+
+#### 6. Firebase Real-Time Cloud Sync & Push Notifications (3-Step Roadmap)
+- **Goal:** Enable store owner to update catalog/stock on their phone and have every customer's phone update automatically with push notifications, while preserving offline-first functionality.
+- **Step 1: Real-Time Cloud Database (Google Firebase Firestore — 100% Free Spark Tier)**
+  - Add `firebase_core` and `cloud_firestore` to `pubspec.yaml`.
+  - Maintain offline-first cache: Customer phones read instantly from local storage cache; when connected to internet, Firestore streams delta updates (<10 KB).
+  - When the Owner marks an item out of stock or adds a product in Admin Panel, Firestore syncs to all online customer devices within <1 second with zero app updates.
+- **Step 2: Dual-Tier Notification Engine (In-App Badges + FCM Push Notifications)**
+  - **In-App Live Alerts:** Badge overlays on Cart and Wishlist items if an item goes out of stock or returns to stock.
+  - **Phone Push Notifications (Firebase Cloud Messaging - FCM):**
+    - `topic: store_broadcast`: Broadcasts new arrivals, seasonal festival discounts, and newly added categories to all store customers.
+    - `topic: stock_{productId}`: Customers who favorited an out-of-stock product automatically subscribe to this topic; when the admin flips the stock switch to "In Stock", an automated push notification alerts them: *"🎉 Good news! [Product Name] is back in stock at Shalimar Store!"*
+- **Step 3: Update Separation Matrix**
+  - **Catalog & Stock Updates:** Synchronized silently via Cloud Firestore with zero downloads or app reinstalls.
+  - **Software App Updates (APK):** Detected via the GitHub Releases OTA update banner built into the store header with 1-tap APK download.
+
+
+
+

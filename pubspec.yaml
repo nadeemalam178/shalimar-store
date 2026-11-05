@@ -1,7 +1,7 @@
 name: shalimar_store
 description: "Shalimar Store - Since 1988. Official General Store & Grocery App."
 publish_to: 'none'
-version: 2.0.0+2
+version: 3.0.0+3
 
 environment:
   sdk: ^3.13.7
@@ -17,6 +17,7 @@ dependencies:
   uuid: ^4.5.1
   crypto: ^3.0.6
   image_picker: ^1.1.2
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

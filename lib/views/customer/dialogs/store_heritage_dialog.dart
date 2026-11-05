@@ -276,3 +276,4 @@ class StoreHeritageDialog extends StatelessWidget {
     );
   }
 }
+

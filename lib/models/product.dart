@@ -6,6 +6,7 @@ class Product {
   final double mrp;
   final String unit;
   final String imageUrl;
+  final List<String> images;
   final bool inStock;
   final String description;
 
@@ -17,9 +18,19 @@ class Product {
     required this.mrp,
     required this.unit,
     required this.imageUrl,
+    this.images = const [],
     this.inStock = true,
     this.description = '',
   });
+
+  List<String> get allImages {
+    final list = <String>[];
+    if (imageUrl.isNotEmpty) list.add(imageUrl);
+    for (final img in images) {
+      if (img.isNotEmpty && !list.contains(img)) list.add(img);
+    }
+    return list;
+  }
 
   double get discountPercent {
     if (mrp <= price || mrp <= 0) return 0;
@@ -34,6 +45,7 @@ class Product {
     double? mrp,
     String? unit,
     String? imageUrl,
+    List<String>? images,
     bool? inStock,
     String? description,
   }) {
@@ -45,6 +57,7 @@ class Product {
       mrp: mrp ?? this.mrp,
       unit: unit ?? this.unit,
       imageUrl: imageUrl ?? this.imageUrl,
+      images: images ?? this.images,
       inStock: inStock ?? this.inStock,
       description: description ?? this.description,
     );
@@ -59,12 +72,17 @@ class Product {
       'mrp': mrp,
       'unit': unit,
       'imageUrl': imageUrl,
+      'images': images,
       'inStock': inStock,
       'description': description,
     };
   }
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    List<String> parsedImages = [];
+    if (json['images'] is List) {
+      parsedImages = (json['images'] as List).map((e) => e.toString()).toList();
+    }
     return Product(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
@@ -73,9 +91,9 @@ class Product {
       mrp: (json['mrp'] as num?)?.toDouble() ?? (json['price'] as num?)?.toDouble() ?? 0.0,
       unit: json['unit'] as String? ?? '1 pc',
       imageUrl: json['imageUrl'] as String? ?? '',
+      images: parsedImages,
       inStock: json['inStock'] as bool? ?? true,
       description: json['description'] as String? ?? '',
     );
   }
 }
-

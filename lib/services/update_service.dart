@@ -94,3 +94,4 @@ class UpdateService {
     return false;
   }
 }
+

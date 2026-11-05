@@ -1,6 +1,6 @@
 class AppConstants {
   static const String appName = 'Shalimar Store';
-  static const String appVersion = 'v2.0.0';
+  static const String appVersion = 'v3.0.0';
   static const String appTagline = 'Since 1988 • Quality & Trust';
   static const String ownerPhone = '7488151683';
   static const String ownerWhatsApp = '917488151683';
@@ -8,9 +8,9 @@ class AppConstants {
 
   // Secure Defaults: Default ID and Cryptographic SHA-256 Hash of Owner Password
   // Plain credentials are stored exclusively in secure_credentials/OWNER_CREDENTIALS.txt
-  static const String defaultAdminId = 'shalimar_owner_1988';
+  static const String defaultAdminId = 'Shalimar@1988';
   static const String defaultAdminPasswordHash =
-      '76577ef1aacb50890b5dee7d496737f87e48d32ccdecde573d4eefa5d8cb6684';
+      'e556e2eb347e2edd9af22f7298d0e19d66c6b21a6b416b46531fcdf2ae1c317b';
 
   static const String logoPath = 'assets/images/logo.png';
   static const String storeFrontImagePath = 'assets/images/store_front.jpg';
