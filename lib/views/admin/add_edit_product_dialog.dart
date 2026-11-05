@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/product.dart';
@@ -23,6 +25,8 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   late TextEditingController _descCtrl;
   late String _category;
   late bool _inStock;
+  String? _localImagePath;
+  bool _showUrlField = false;
 
   final List<String> _commonCategories = [
     'Atta, Rice & Grains',
@@ -52,6 +56,12 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
       _commonCategories.insert(0, _category);
     }
     _inStock = p?.inStock ?? true;
+
+    if (p != null && p.imageUrl.isNotEmpty) {
+      if (File(p.imageUrl).existsSync()) {
+        _localImagePath = p.imageUrl;
+      }
+    }
   }
 
   @override
@@ -65,12 +75,40 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 1024,
+      );
+      if (picked != null) {
+        setState(() {
+          _localImagePath = picked.path;
+          _imageCtrl.text = picked.path;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open camera/gallery: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   void _save() {
     if (!_formKey.currentState!.validate()) return;
 
     final price = double.tryParse(_priceCtrl.text) ?? 0.0;
     final mrp = double.tryParse(_mrpCtrl.text) ?? price;
     final catalogue = context.read<CatalogueProvider>();
+
+    final imagePath = _imageCtrl.text.trim();
 
     if (widget.productToEdit == null) {
       // Add new
@@ -80,7 +118,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
         price: price,
         mrp: mrp,
         unit: _unitCtrl.text.trim(),
-        imageUrl: _imageCtrl.text.trim(),
+        imageUrl: imagePath,
         inStock: _inStock,
         description: _descCtrl.text.trim(),
       );
@@ -93,7 +131,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           price: price,
           mrp: mrp,
           unit: _unitCtrl.text.trim(),
-          imageUrl: _imageCtrl.text.trim(),
+          imageUrl: imagePath,
           inStock: _inStock,
           description: _descCtrl.text.trim(),
         ),
@@ -105,6 +143,128 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
       SnackBar(
         content: Text(widget.productToEdit == null ? 'Product added!' : 'Product updated!'),
         backgroundColor: AppColors.success,
+      ),
+    );
+  }
+
+  Widget _buildImagePreview() {
+    final hasLocal = _localImagePath != null && File(_localImagePath!).existsSync();
+    final hasUrl = _imageCtrl.text.startsWith('http');
+
+    if (hasLocal || hasUrl) {
+      return Stack(
+        children: [
+          Container(
+            height: 140,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: hasLocal
+                  ? Image.file(
+                      File(_localImagePath!),
+                      fit: BoxFit.cover,
+                    )
+                  : Image.network(
+                      _imageCtrl.text,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Icon(Icons.broken_image, size: 36, color: Colors.grey),
+                      ),
+                    ),
+            ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.black.withAlpha(160),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.refresh, size: 16, color: Colors.white),
+                    onPressed: () => _pickImage(ImageSource.gallery),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.red.withAlpha(200),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(Icons.delete, size: 16, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        _localImagePath = null;
+                        _imageCtrl.clear();
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.add_a_photo_outlined, size: 36, color: AppColors.primary),
+          const SizedBox(height: 8),
+          const Text(
+            'Product Photo',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _pickImage(ImageSource.camera),
+                  icon: const Icon(Icons.camera_alt, size: 16),
+                  label: const Text('Capture Photo', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _pickImage(ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library, size: 16, color: AppColors.primary),
+                  label: const Text('Upload File', style: TextStyle(fontSize: 12, color: AppColors.primary)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          TextButton(
+            onPressed: () => setState(() => _showUrlField = !_showUrlField),
+            child: Text(
+              _showUrlField ? 'Hide Web URL Option' : 'Or paste Web Image URL',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -152,6 +312,21 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Photo Capture & Upload Box
+                      _buildImagePreview(),
+                      if (_showUrlField) ...[
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: _imageCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Image Web URL',
+                            hintText: 'https://...',
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ],
+                      const SizedBox(height: 14),
+
                       // Product Name
                       TextFormField(
                         controller: _nameCtrl,
@@ -220,16 +395,6 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Image URL
-                      TextFormField(
-                        controller: _imageCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Image Web URL (Optional)',
-                          hintText: 'https://...',
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
                       // Description
                       TextFormField(
                         controller: _descCtrl,
@@ -248,7 +413,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          _inStock ? 'Customers can add this item' : 'Marked as Out of Stock',
+                          _inStock ? 'In Stock (Visible to Customers)' : 'Out of Stock (Greyed Out)',
                           style: TextStyle(
                             fontSize: 12,
                             color: _inStock ? AppColors.success : Colors.red,

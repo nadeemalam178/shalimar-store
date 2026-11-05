@@ -43,3 +43,4 @@ jobs:
         with:
           name: shalimar-store-split-apks
           path: build/app/outputs/flutter-apk/*.apk
+

@@ -5,6 +5,7 @@ import '../services/storage_service.dart';
 
 class CatalogueProvider with ChangeNotifier {
   List<Product> _products = [];
+  List<String> _customCategories = [];
   bool _isLoading = true;
   String _selectedCategory = 'All';
   String _searchQuery = '';
@@ -16,6 +17,11 @@ class CatalogueProvider with ChangeNotifier {
 
   List<String> get categories {
     final set = <String>{'All'};
+    for (final c in _customCategories) {
+      if (c.trim().isNotEmpty) {
+        set.add(c.trim());
+      }
+    }
     for (final p in _products) {
       if (p.category.trim().isNotEmpty) {
         set.add(p.category.trim());
@@ -39,7 +45,24 @@ class CatalogueProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     _products = await StorageService.loadProducts();
+    _customCategories = StorageService.loadCustomCategories();
     _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> addCategory(String categoryName) async {
+    final clean = categoryName.trim();
+    if (clean.isEmpty || clean.toLowerCase() == 'all') return;
+    if (!_customCategories.contains(clean)) {
+      _customCategories.add(clean);
+      await StorageService.saveCustomCategories(_customCategories);
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeCategory(String categoryName) async {
+    _customCategories.remove(categoryName.trim());
+    await StorageService.saveCustomCategories(_customCategories);
     notifyListeners();
   }
 
@@ -114,3 +137,4 @@ class CatalogueProvider with ChangeNotifier {
     notifyListeners();
   }
 }
+

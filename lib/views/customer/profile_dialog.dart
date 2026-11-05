@@ -355,3 +355,4 @@ class _ProfileDialogState extends State<ProfileDialog> {
     );
   }
 }
+

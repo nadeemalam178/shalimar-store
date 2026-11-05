@@ -20,3 +20,4 @@ class CurrencyFormatter {
     return _decimalInrFormatter.format(amount);
   }
 }
+

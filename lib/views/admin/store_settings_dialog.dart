@@ -23,7 +23,11 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
   @override
   void initState() {
     super.initState();
-    _adminIdCtrl.text = AdminAuthService.getStoredAdminId();
+    // Do not reveal default confidential credentials in text fields
+    final storedId = AdminAuthService.getStoredAdminId();
+    if (storedId != AppConstants.defaultAdminId) {
+      _adminIdCtrl.text = storedId;
+    }
   }
 
   @override
@@ -158,7 +162,10 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
                   Expanded(
                     child: TextField(
                       controller: _adminIdCtrl,
-                      decoration: const InputDecoration(hintText: 'admin'),
+                      decoration: const InputDecoration(
+                        labelText: 'Admin Login ID',
+                        hintText: 'Enter new Admin ID',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

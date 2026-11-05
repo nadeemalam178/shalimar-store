@@ -428,3 +428,4 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
     );
   }
 }
+

@@ -1,12 +1,26 @@
 import 'package:flutter/foundation.dart';
 import '../models/cart_item.dart';
 import '../models/product.dart';
+import '../services/storage_service.dart';
 
 class CartProvider with ChangeNotifier {
   final Map<String, CartItem> _items = {};
 
   Map<String, CartItem> get items => _items;
   List<CartItem> get itemList => _items.values.toList();
+
+  Future<void> init() async {
+    final savedItems = StorageService.loadCart();
+    _items.clear();
+    for (final item in savedItems) {
+      _items[item.product.id] = item;
+    }
+    notifyListeners();
+  }
+
+  void _persist() {
+    StorageService.saveCart(_items.values.toList());
+  }
 
   int get totalItemCount {
     int total = 0;
@@ -44,6 +58,7 @@ class CartProvider with ChangeNotifier {
     } else {
       _items[product.id] = CartItem(product: product, quantity: 1);
     }
+    _persist();
     notifyListeners();
   }
 
@@ -54,16 +69,20 @@ class CartProvider with ChangeNotifier {
     } else {
       _items.remove(product.id);
     }
+    _persist();
     notifyListeners();
   }
 
   void removeItem(String productId) {
     _items.remove(productId);
+    _persist();
     notifyListeners();
   }
 
   void clearCart() {
     _items.clear();
+    _persist();
     notifyListeners();
   }
 }
+

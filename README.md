@@ -2,159 +2,120 @@
   <img src="assets/images/logo.png" width="140" alt="Shalimar Store Logo" />
 </p>
 
-<h1 align="center">🛒 Shalimar Store — Since 1988</h1>
+<h1 align="center">🛒 Shalimar Store — Since 1988 (v2.0.0)</h1>
 
 <p align="center">
-  <b>Modern General Store & Grocery Mobile Application built with Flutter & Dart</b>
+  <b>Official Dual-Mode Kirana & General Store Mobile Application</b><br>
+  <i>Serving Trust, Quality & Purity on Ashok Raj Path, Alamganj, Patna — 800007</i>
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Version-v2.0.0-crimson" alt="Version" />
   <img src="https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Dart-3.13+-0175C2?logo=dart&logoColor=white" alt="Dart" />
-  <img src="https://img.shields.io/badge/Architecture-Clean%20Layered-emerald" alt="Clean Architecture" />
-  <img src="https://img.shields.io/badge/State-Provider-orange" alt="Provider" />
-  <img src="https://img.shields.io/badge/Android-APK%20Split%20ABI-success" alt="Android" />
+  <img src="https://img.shields.io/badge/OTA-GitHub%20Releases%20Live-brightgreen" alt="OTA Updates" />
+  <img src="https://img.shields.io/badge/Architecture-Offline--First%20Clean-emerald" alt="Clean Architecture" />
+  <img src="https://img.shields.io/badge/Android-Split%20ABI%20(v1--v4%20Signed)-success" alt="Android" />
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
 </p>
 
 ---
 
-## 🌟 Overview
+## 🏬 Real Store Heritage
 
-**Shalimar Store** is an offline-first, dual-mode general store mobile application designed for local retail and Kirana businesses. It brings traditional neighborhood shopping into the digital era with **zero gateway fees**, **direct WhatsApp ordering**, and an **ID & Password protected owner management panel**.
+<p align="center">
+  <img src="assets/images/store_front.jpg" width="550" alt="Md. Jamil General Store - Shalimar Store Front, Alamganj, Patna" style="border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);" />
+  <br>
+  <i><b>Md. Jamil General Store (Shalimar G. Store)</b> — Alamganj Main Road, Ashok Rajpath, Patna - 800007, Bihar</i>
+</p>
+
+Established in **1988** by Mohammad Jamil, **Shalimar General Store** has been a beloved neighborhood landmark for over **35+ years** in Patna. Serving authentic daily essentials, pure mustard oils, premium basmati rice, spices, lentils, fresh dairy, and household goods with personalized doorstep care.
+
+---
+
+## ✨ What's New in v2.0.0
+
+- ⚡ **Persistent Shopping Cart:** Items placed in the cart remain preserved in local storage across restarts until explicitly ordered on WhatsApp or cleared.
+- 🎨 **Animated Splash Screen:** Elegant fade-in and scale animation featuring the circular gold-rimmed Shalimar badge, with a smooth fade-out transition into the store.
+- 🔍 **Pinned / Frozen Rounded Search Bar:** Search bar remains permanently pinned at the top while scrolling through 1,000+ items.
+- ⌨️ **Dock Jumping Fix:** Bottom deck and floating cart automatically hide while typing in search or forms, preventing any screen clutter.
+- ⭕ **Unified Rounded Design Language:** Strict design consistency with 20–30px radiuses on cards, buttons, dialogs, and pill tags.
+- 📷 **Direct Camera & Gallery Photo Upload:** Admin can shoot live product photos or pick from the device gallery.
+- 📊 **Out-of-Stock Category Breakdown Dashboard:** Interactive management card showing unavailable items grouped by category with 1-tap instant Restock.
+- 🏷️ **Dynamic Category Management:** Admin can add new departments on the fly, instantly reflected for all customers without app update.
+- 🚀 **Zero-Bloat GitHub Releases OTA Update Banner:** When a new release is published on GitHub, a dismissible banner automatically appears in the app with the changelog and 1-tap download link.
+- 🔒 **Confidential Credentials Security:** Default IDs and passwords are never displayed in the app UI, hint text, or text boxes; secured via cryptographic SHA-256 verification.
+
+---
+
+## 📱 App Experience & Architecture
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  🛍️  SHALIMAR STORE [Logo]                  🔍 [Search]│
+│  [Logo] Welcome, Nadeem 👋               [Admin/Owner] │
 ├────────────────────────────────────────────────────────┤
-│  [Atta & Rice]  [Oils & Ghee]  [Masale]  [Dairy]       │
+│  🔍 [Search 1,000+ items, brand, category...] (PINNED) │
+├────────────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────────────┐  │
+│  │ 🛒 SHALIMAR STORE — Since 1988 (Tap for Photos)  │  │
+│  └──────────────────────────────────────────────────┘  │
+│                                                        │
+│  [All (52)] [Atta & Rice (12)] [Oils (8)] [Dairy (6)]   │
 │                                                        │
 │  ┌───────────────────┐      ┌───────────────────┐      │
 │  │ Aashirvaad Atta   │      │ Fortune Sunlite   │      │
-│  │ 5 kg • ₹245 ₹270  │      │ 1 L • ₹135 ₹150   │      │
+│  │ 10 kg • ₹445 ₹490 │      │ 1 L • ₹135 ₹150   │      │
 │  │    [ -  1  + ]    │      │     [ + ADD ]     │      │
 │  └───────────────────┘      └───────────────────┘      │
 │                                                        │
 │ ┌────────────────────────────────────────────────────┐ │
 │ │ 🛒 3 Items | ₹490          View Cart & Order ➔     │ │ <── Floating Cart Deck
 │ ├────────────────────────────────────────────────────┤ │
-│ │  ❤️ Favorites        🏠 Store          🛍️ Cart     │ │ <── Modern Dock Navigation
+│ │  ❤️ Favorites        🏠 Store          🛍️ Cart     │ │ <── Modern Bottom Dock
 │ └────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────┘
 ```
 
----
+### 📦 Managing 1,000+ Items & Database Performance
 
-## ✨ Key Features
-
-### 🛍️ Customer Experience
-- **Interactive First-Time Walkthrough:** Welcomes new customers with a visual 4-slide tour and sets up their personalized customer username.
-- **Top Greeting Bar:** Displays customer name (`Welcome, {username} 👋`) with one-tap access to profile, order history, and saved favorites.
-- **Modern Bottom Deck (Dock):**
-  - **Left:** ❤️ Wishlisted / Favorite items with instant re-add.
-  - **Middle:** 🏠 Elevated Home Store icon with brand gradient and glow.
-  - **Right:** 🛍️ Shopping Cart with real-time badge.
-- **Floating Cart Deck:** Smoothly slides up whenever items are added, showing live item count, savings, and total bill.
-- **Direct WhatsApp Orders:** One-tap order dispatch directly to the owner's WhatsApp (`7488151683`) with itemized billing, customer name, and delivery address.
-- **Direct UPI Integration:** Displays store UPI (`7488151683@upi`) with 1-tap Google Pay / PhonePe / Paytm payment link (0% transaction fee).
-
-### 🔐 Owner / Admin Management Portal
-- **Discrete Top Switch:** Accessible from the top-right header.
-- **Frosted Glass Security:** Demands Admin ID and Password with a smooth full-screen background blur (`BackdropFilter`).
-- **Inventory Control:**
-  - 1-tap instant switch between **In Stock** (Green) and **Out of Stock** (Red).
-  - Add new products with custom pack sizes, MRP, and selling prices.
-  - Edit or delete existing inventory items.
-- **One-Click Standard Kirana Catalogue Loader:** Pre-populates the store with 50+ essential Indian grocery items across 9 departments (Atta, Rice, Pulses, Cooking Oils, Spices, Dairy, Biscuits, Cleaning, Personal Care).
-- **Settings:** Update Admin ID and Owner Password securely with SHA-256 hashing.
+| Metric | Implementation & Optimization |
+| :--- | :--- |
+| **Storage Engine** | Offline-first persistent JSON storage backed by `SharedPreferences` + bundled `standard_catalogue.json`. |
+| **Viewport Virtualization** | Uses Flutter's `SliverGrid` and `SliverList.builder` delegate. Regardless of whether there are 50 or 5,000 products, **only ~6 to 8 items visible on screen are kept in active GPU/RAM memory**. |
+| **Frame Rate** | Constant 60 FPS smooth scrolling with zero lag or garbage collection spikes. |
+| **Image Memory Caching** | Supports both remote network URLs and offline device files (`File.existsSync()`) with bounded thumbnail caches. |
+| **Search Engine** | Real-time multi-attribute filtering across product name, category, and units. |
 
 ---
 
-## 🏗️ Architecture & Project Structure
+## 📲 Download & Installation
 
-```
-shalimar_store/
-├── assets/
-│   ├── images/
-│   │   └── logo.png              # High quality circular store logo
-│   └── data/
-│       └── standard_catalogue.json # 50+ pre-filled Kirana store items
-├── lib/
-│   ├── main.dart                 # App entry point & provider orchestration
-│   ├── core/
-│   │   ├── constants/
-│   │   │   ├── app_colors.dart    # Crimson Red (#B71C1C) & Warm Gold palette
-│   │   │   └── app_constants.dart # Phone, UPI, & Storage keys
-│   │   ├── theme/
-│   │   │   └── app_theme.dart     # Material 3 typography & styling
-│   │   └── utils/
-│   │       ├── currency_formatter.dart # ₹ INR formatting
-│   │       └── whatsapp_helper.dart    # WhatsApp order dispatcher & UPI launcher
-│   ├── models/
-│   │   ├── product.dart           # Product model & discount calculation
-│   │   ├── cart_item.dart         # Cart item with quantity & savings
-│   │   ├── order_model.dart       # Order history & reorder tracking
-│   │   └── user_profile.dart      # Customer profile & favorites
-│   ├── providers/
-│   │   ├── catalogue_provider.dart # Catalog state, search, category filter, CRUD
-│   │   ├── cart_provider.dart      # Cart state, item counters, bill calculation
-│   │   ├── user_provider.dart      # User profile, favorites, past orders
-│   │   └── admin_provider.dart     # Authentication & admin mode state
-│   ├── services/
-│   │   ├── admin_auth_service.dart # SHA-256 hashed credentials verification
-│   │   └── storage_service.dart    # Offline-first persistent storage
-│   ├── views/
-│   │   ├── onboarding/
-│   │   │   └── welcome_onboarding_screen.dart # 4-slide tour & profile setup
-│   │   ├── customer/
-│   │   │   ├── customer_main_screen.dart      # Dock navigation & top bar
-│   │   │   ├── profile_dialog.dart            # Profile, favorites & last orders
-│   │   │   └── tabs/
-│   │   │       ├── home_catalog_tab.dart      # Product grid & category pills
-│   │   │       ├── favorites_tab.dart         # Saved wishlisted items
-│   │   │       └── cart_tab.dart              # Cart summary, UPI ID, WhatsApp order
-│   │   └── admin/
-│   │       ├── admin_login_overlay.dart       # Frosted glass blur & sign in
-│   │       ├── admin_dashboard_screen.dart    # Stock manager & KPI stats
-│   │       ├── add_edit_product_dialog.dart   # Add/edit product modal
-│   │       └── store_settings_dialog.dart     # Password & ID settings
-│   └── widgets/
-│       ├── bottom_deck_dock.dart              # Floating bottom dock
-│       ├── floating_cart_bar.dart             # Animated slide-up cart pill
-│       └── product_card.dart                  # Item card with +ADD counter
-└── pubspec.yaml
-```
+Optimized **Split-per-ABI APKs** (~15–20 MB) signed with APK Signature Scheme v1, v2, v3, and v4:
 
----
-
-## 📱 Releases & Installation
-
-This application is built with **Split-per-ABI** configuration to minimize file size (only ~15–18 MB per architecture instead of a 60+ MB universal APK):
-
-| Architecture | APK Target | Description |
+| Download | Architecture | Recommended For |
 | :--- | :--- | :--- |
-| **arm64-v8a** | `app-arm64-v8a-release.apk` | Most modern Android smartphones (2018+) |
-| **armeabi-v7a** | `app-armeabi-v7a-release.apk` | Older 32-bit Android devices |
-| **x86_64** | `app-x86_64-release.apk` | Android emulators & Chromebooks |
-
-### Installation Instructions
-1. Download the `app-arm64-v8a-release.apk` (or matching architecture) from [GitHub Releases](https://github.com/nadeemalam178/shalimar-store/releases).
-2. Open the downloaded file on your Android device and tap **Install**.
-3. All permissions are verified clean (`INTERNET` for product images and `QUERIES` for WhatsApp / UPI).
+| 📲 **[Download arm64-v8a](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v2.0.0/app-arm64-v8a-release.apk)** | `arm64-v8a` (19.8 MB) | Modern Android phones (2018+) — **Recommended** |
+| 📲 **[Download armeabi-v7a](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v2.0.0/app-armeabi-v7a-release.apk)** | `armeabi-v7a` (18.1 MB) | Older 32-bit Android phones |
+| 📲 **[Download x86_64](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v2.0.0/app-x86_64-release.apk)** | `x86_64` (21.4 MB) | Android Emulators & Chromebooks |
 
 ---
 
-## 🛡️ Default Admin Credentials
+## 🛠️ Tech Stack
 
-- **Admin ID:** `admin`
-- **Owner Password:** `shalimar123`
-*(Can be updated anytime inside the Admin Settings screen).*
+- **Framework:** Flutter (Channel stable, Material 3)
+- **Language:** Dart 3.13+
+- **State Management:** Provider Architecture (`ChangeNotifier`)
+- **Persistence:** `shared_preferences`, Offline Asset JSON
+- **Hardware Integration:** `image_picker` (Camera & Gallery)
+- **Security:** Cryptographic SHA-256 Admin Authentication
+- **External Communication:** Direct WhatsApp API URI dispatch & UPI deep linking
 
 ---
 
-## 👨‍💻 Developer & Store Information
+## 👨‍💼 Contact & Store Information
 
-- **Store:** Shalimar Store (Since 1988)
-- **Helpline / WhatsApp:** +91 7488151683
+- **Store:** Md. Jamil General Store (Shalimar Store, Est. 1988)
+- **Address:** Alamganj Main Road, Ashok Raj Path, Patna - 800007, Bihar
+- **Owner Phone / WhatsApp:** +91 7488151683
 - **Official UPI ID:** `7488151683@upi`
 - **Developer:** [Nadeem Alam](https://github.com/nadeemalam178)

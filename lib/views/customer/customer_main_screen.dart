@@ -42,13 +42,27 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     }
   }
 
+  Widget _buildActiveTab(int index) {
+    switch (index) {
+      case 0:
+        return FavoritesTab(onBrowseHome: () => _onTabSelected(1));
+      case 2:
+        return CartTab(onBrowseHome: () => _onTabSelected(1));
+      case 1:
+      default:
+        return const HomeCatalogTab();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<UserProvider>();
     final admin = context.watch<AdminProvider>();
+    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         toolbarHeight: 64,
         elevation: 0,
@@ -69,7 +83,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant.withOpacity(0.5),
+                  color: AppColors.surfaceVariant.withAlpha(120),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Row(
@@ -111,13 +125,28 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               ),
             ),
 
-            // Center: App Logo
-            Hero(
-              tag: 'app_logo',
-              child: Image.asset(
-                AppConstants.logoPath,
-                height: 38,
-                fit: BoxFit.contain,
+            // Center: Perfectly Circular Logo with Golden Border (Never squares when scrolled)
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.accent, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  AppConstants.logoPath,
+                  width: 42,
+                  height: 42,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
 
@@ -129,7 +158,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: admin.isLoggedIn
-                      ? AppColors.primary.withOpacity(0.12)
+                      ? AppColors.primary.withAlpha(30)
                       : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
@@ -161,18 +190,36 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       ),
       body: Stack(
         children: [
-          // Main Body Tabs
-          IndexedStack(
-            index: _currentTabIndex,
-            children: [
-              FavoritesTab(onBrowseHome: () => _onTabSelected(1)),
-              const HomeCatalogTab(),
-              CartTab(onBrowseHome: () => _onTabSelected(1)),
-            ],
+          // Main Body with Screen-Covering Animation into Cart
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              final isCart = (child.key as ValueKey<int>?)?.value == 2;
+              if (isCart) {
+                // Expanding slide-up & scale effect covering the screen
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.08),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
+                );
+              }
+              return FadeTransition(opacity: animation, child: child);
+            },
+            child: KeyedSubtree(
+              key: ValueKey<int>(_currentTabIndex),
+              child: _buildActiveTab(_currentTabIndex),
+            ),
           ),
 
-          // Floating Cart Bar (Appears when cart has items and not on cart tab)
-          if (_currentTabIndex != 2)
+          // Floating Cart Bar (Appears when cart has items, not on cart tab, and keyboard closed)
+          if (_currentTabIndex != 2 && !keyboardOpen)
             Positioned(
               left: 0,
               right: 0,
@@ -182,16 +229,17 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               ),
             ),
 
-          // Bottom Deck Dock (Left=Favorites, Center=Elevated Home, Right=Cart)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomDeckDock(
-              currentIndex: _currentTabIndex,
-              onTabSelected: _onTabSelected,
+          // Bottom Deck Dock (Left=Favorites, Center=Elevated Home, Right=Cart) - Hidden during typing
+          if (!keyboardOpen)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: BottomDeckDock(
+                currentIndex: _currentTabIndex,
+                onTabSelected: _onTabSelected,
+              ),
             ),
-          ),
 
           // Blur + Admin Login Modal
           if (_showAdminLogin)

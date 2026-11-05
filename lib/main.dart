@@ -9,8 +9,7 @@ import 'providers/catalogue_provider.dart';
 import 'providers/user_provider.dart';
 import 'services/admin_auth_service.dart';
 import 'services/storage_service.dart';
-import 'views/customer/customer_main_screen.dart';
-import 'views/onboarding/welcome_onboarding_screen.dart';
+import 'views/splash/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,20 +46,14 @@ class ShalimarStoreApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()..init()),
         ChangeNotifierProvider(create: (_) => CatalogueProvider()..init()),
-        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()..init()),
         ChangeNotifierProvider(create: (_) => AdminProvider()..init()),
       ],
-      child: Consumer<UserProvider>(
-        builder: (context, user, _) {
-          return MaterialApp(
-            title: AppConstants.appName,
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            home: user.hasSeenOnboarding
-                ? const CustomerMainScreen()
-                : const WelcomeOnboardingScreen(),
-          );
-        },
+      child: MaterialApp(
+        title: AppConstants.appName,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: const SplashScreen(),
       ),
     );
   }

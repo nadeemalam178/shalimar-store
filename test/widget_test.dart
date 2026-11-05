@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shalimar_store/models/product.dart';
 import 'package:shalimar_store/providers/cart_provider.dart';
+import 'package:shalimar_store/services/admin_auth_service.dart';
 
 void main() {
   group('Product & Cart Unit Tests', () {
@@ -58,6 +59,23 @@ void main() {
       cart.clearCart();
       expect(cart.totalItemCount, 0);
       expect(cart.totalAmount, 0.0);
+    });
+
+    test('Secure Admin Authentication verification', () {
+      // Test incorrect credentials fail
+      expect(AdminAuthService.authenticate('admin', 'wrong_pass'), isFalse);
+      expect(AdminAuthService.authenticate('random_user', 'shalimar123'), isFalse);
+
+      // Test secure owner credentials pass
+      final isAuth = AdminAuthService.authenticate(
+        'shalimar_owner_1988',
+        r'Sh@l1m@r#1988$Sec!Pro9',
+      );
+      expect(isAuth, isTrue);
+      expect(AdminAuthService.isLoggedIn, isTrue);
+
+      AdminAuthService.logout();
+      expect(AdminAuthService.isLoggedIn, isFalse);
     });
   });
 }

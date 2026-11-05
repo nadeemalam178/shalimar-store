@@ -24,7 +24,7 @@ class AdminAuthService {
 
   static String getStoredPasswordHash() {
     return _prefs?.getString(AppConstants.keyAdminPasswordHash) ??
-        _hashPassword(AppConstants.defaultAdminPassword);
+        AppConstants.defaultAdminPasswordHash;
   }
 
   /// Verifies entered ID and Password against stored credentials
@@ -65,3 +65,4 @@ class AdminAuthService {
     _isAdminLoggedIn = false;
   }
 }
+

@@ -65,8 +65,8 @@ flowchart TD
 - `iconName`: `String` (Material Icon representation)
 
 ### 3. Admin Credentials Structure
-- `adminId`: Default `admin` (Stored securely)
-- `passwordHash`: SHA-256 hashed password (Default: `shalimar123`, changeable from Admin Settings)
+- `adminId`: Stored securely
+- `passwordHash`: SHA-256 hashed password (Managed via secure configuration)
 - `sessionActive`: In-memory session state with auto-lock on inactivity
 
 ---
@@ -112,7 +112,7 @@ flowchart TD
 - Create: `lib/services/admin_auth_service.dart`
 - Test: `test/services/admin_auth_service_test.dart`
 - Features:
-  - Default credentials initialization (Admin ID: `admin`, Password: `shalimar123`).
+  - Default credentials initialized securely via SHA-256 hash.
   - Hashing using SHA-256 for secure comparison.
   - Persistent storage using `shared_preferences`.
   - Methods: `Future<bool> authenticate(String id, String password)`, `Future<bool> changePassword(String oldPass, String newPass)`, `bool get isLoggedIn`, `void logout()`.

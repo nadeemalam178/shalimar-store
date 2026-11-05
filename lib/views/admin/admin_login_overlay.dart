@@ -176,7 +176,7 @@ class _AdminLoginOverlayState extends State<AdminLoginOverlay> {
                       controller: _idController,
                       decoration: InputDecoration(
                         labelText: 'Admin ID',
-                        hintText: 'e.g. admin',
+                        hintText: 'Enter Admin ID',
                         prefixIcon: const Icon(Icons.person_pin_rounded, color: AppColors.primary),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -210,7 +210,7 @@ class _AdminLoginOverlayState extends State<AdminLoginOverlay> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Default login: admin / shalimar123',
+                        'Confidential owner credentials required',
                         style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
                       ),
                     ),
@@ -243,3 +243,4 @@ class _AdminLoginOverlayState extends State<AdminLoginOverlay> {
     );
   }
 }
+

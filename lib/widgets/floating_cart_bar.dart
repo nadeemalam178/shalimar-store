@@ -111,3 +111,4 @@ class FloatingCartBar extends StatelessWidget {
     );
   }
 }
+

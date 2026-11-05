@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -86,11 +88,7 @@ class _CartTabState extends State<CartTab> {
     final user = context.read<UserProvider>();
 
     // Update user profile with latest contact info
-    await user.updateProfile(
-      username: name,
-      phone: phone,
-      address: address,
-    );
+    await user.updateProfile(username: name, phone: phone, address: address);
     if (!mounted) return;
 
     final orderItems = List.from(cart.itemList);
@@ -126,10 +124,16 @@ class _CartTabState extends State<CartTab> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Row(
               children: [
-                Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28),
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.success,
+                  size: 28,
+                ),
                 SizedBox(width: 8),
                 Text('Order Sent!'),
               ],
@@ -144,7 +148,10 @@ class _CartTabState extends State<CartTab> {
                   Navigator.pop(ctx);
                   widget.onBrowseHome();
                 },
-                child: const Text('Back to Store', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Back to Store',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -235,8 +242,15 @@ class _CartTabState extends State<CartTab> {
                   ),
                   TextButton.icon(
                     onPressed: () => cart.clearCart(),
-                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                    label: const Text('Clear', style: TextStyle(color: Colors.red)),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: Colors.red,
+                    ),
+                    label: const Text(
+                      'Clear',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ),
                 ],
               ),
@@ -275,19 +289,7 @@ class _CartTabState extends State<CartTab> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: item.product.imageUrl.isNotEmpty
-                                ? Image.network(
-                                    item.product.imageUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const Icon(
-                                      Icons.shopping_basket_outlined,
-                                      color: AppColors.primary,
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.shopping_basket_outlined,
-                                    color: AppColors.primary,
-                                  ),
+                            child: _buildProductThumbnail(item.product.imageUrl),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -310,7 +312,10 @@ class _CartTabState extends State<CartTab> {
                               const SizedBox(height: 2),
                               Text(
                                 '${item.product.unit} • ${CurrencyFormatter.format(item.product.price)} each',
-                                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -338,11 +343,17 @@ class _CartTabState extends State<CartTab> {
                                 onTap: () => cart.decrementItem(item.product),
                                 child: const Padding(
                                   padding: EdgeInsets.all(6),
-                                  child: Icon(Icons.remove, size: 16, color: AppColors.primary),
+                                  child: Icon(
+                                    Icons.remove,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                ),
                                 child: Text(
                                   '${item.quantity}',
                                   style: const TextStyle(
@@ -355,7 +366,11 @@ class _CartTabState extends State<CartTab> {
                                 onTap: () => cart.addItem(item.product),
                                 child: const Padding(
                                   padding: EdgeInsets.all(6),
-                                  child: Icon(Icons.add, size: 16, color: AppColors.primary),
+                                  child: Icon(
+                                    Icons.add,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -365,86 +380,6 @@ class _CartTabState extends State<CartTab> {
                     ),
                   );
                 },
-              ),
-
-              const SizedBox(height: 18),
-
-              // UPI ID & Instant Payment Card
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.amber.shade300),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFC68400), size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Shalimar Store Official UPI',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: Color(0xFF7F4E00),
-                            ),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: _copyUpi,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.amber.shade400),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.copy, size: 12, color: Color(0xFF7F4E00)),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Copy',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF7F4E00),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const SelectableText(
-                        AppConstants.ownerUpiId,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                          color: AppColors.darkText,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Pay directly via PhonePe, Google Pay, Paytm, or BHIM. Zero gateway charges.',
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
-                    ),
-                  ],
-                ),
               ),
 
               const SizedBox(height: 18),
@@ -463,7 +398,10 @@ class _CartTabState extends State<CartTab> {
                 controller: _nameController,
                 decoration: const InputDecoration(
                   labelText: 'Your Name *',
-                  prefixIcon: Icon(Icons.person_outline, color: AppColors.primary),
+                  prefixIcon: Icon(
+                    Icons.person_outline,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -472,7 +410,10 @@ class _CartTabState extends State<CartTab> {
                 keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(
                   labelText: 'Contact Phone / WhatsApp *',
-                  prefixIcon: Icon(Icons.phone_outlined, color: AppColors.primary),
+                  prefixIcon: Icon(
+                    Icons.phone_outlined,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -481,7 +422,10 @@ class _CartTabState extends State<CartTab> {
                 maxLines: 2,
                 decoration: const InputDecoration(
                   labelText: 'Delivery Address & Landmark *',
-                  prefixIcon: Icon(Icons.location_on_outlined, color: AppColors.primary),
+                  prefixIcon: Icon(
+                    Icons.location_on_outlined,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -489,7 +433,10 @@ class _CartTabState extends State<CartTab> {
                 controller: _noteController,
                 decoration: const InputDecoration(
                   labelText: 'Special Note / Timing (Optional)',
-                  prefixIcon: Icon(Icons.note_alt_outlined, color: AppColors.primary),
+                  prefixIcon: Icon(
+                    Icons.note_alt_outlined,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
 
@@ -514,7 +461,10 @@ class _CartTabState extends State<CartTab> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Items Total (MRP)', style: TextStyle(color: Colors.grey)),
+                        const Text(
+                          'Items Total (MRP)',
+                          style: TextStyle(color: Colors.grey),
+                        ),
                         Text(
                           CurrencyFormatter.format(cart.totalMrp),
                           style: const TextStyle(fontWeight: FontWeight.w600),
@@ -526,7 +476,10 @@ class _CartTabState extends State<CartTab> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Store Discount', style: TextStyle(color: AppColors.success)),
+                          const Text(
+                            'Store Discount',
+                            style: TextStyle(color: AppColors.success),
+                          ),
                           Text(
                             '- ${CurrencyFormatter.format(cart.totalSavings)}',
                             style: const TextStyle(
@@ -541,8 +494,17 @@ class _CartTabState extends State<CartTab> {
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Store Delivery', style: TextStyle(color: Colors.grey)),
-                        Text('FREE', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.success)),
+                        Text(
+                          'Store Delivery',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        Text(
+                          'FREE',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.success,
+                          ),
+                        ),
                       ],
                     ),
                     const Divider(height: 20),
@@ -605,10 +567,15 @@ class _CartTabState extends State<CartTab> {
                     final name = _nameController.text.trim();
                     WhatsAppHelper.launchUpiPayment(
                       amount: cart.totalAmount,
-                      customerName: name.isNotEmpty ? name : 'Shalimar Customer',
+                      customerName: name.isNotEmpty
+                          ? name
+                          : 'Shalimar Customer',
                     );
                   },
-                  icon: const Icon(Icons.qr_code_rounded, color: AppColors.primary),
+                  icon: const Icon(
+                    Icons.qr_code_rounded,
+                    color: AppColors.primary,
+                  ),
                   label: const Text(
                     'Pay Now with UPI App (GPay / PhonePe / Paytm)',
                     style: TextStyle(
@@ -617,7 +584,10 @@ class _CartTabState extends State<CartTab> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.primary, width: 1.5),
+                    side: const BorderSide(
+                      color: AppColors.primary,
+                      width: 1.5,
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -625,10 +595,147 @@ class _CartTabState extends State<CartTab> {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 12),
+
+              // Official Shalimar UPI ID Box placed directly below UPI payment button
+              _buildOfficialUpiCard(),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildOfficialUpiCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.account_balance_wallet_rounded,
+                color: Color(0xFFC68400),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Shalimar Store Official UPI ID',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Color(0xFF7F4E00),
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: _copyUpi,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.amber.shade400),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.copy,
+                        size: 12,
+                        color: Color(0xFF7F4E00),
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Copy',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF7F4E00),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber.shade200),
+            ),
+            child: const SelectableText(
+              AppConstants.ownerUpiId,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+                color: AppColors.darkText,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Accepted on all UPI apps: PhonePe, Google Pay, Paytm, BHIM, Cred. Zero gateway charges.',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductThumbnail(String imageUrl) {
+    if (imageUrl.isEmpty) {
+      return const Icon(
+        Icons.shopping_basket_outlined,
+        color: AppColors.primary,
+      );
+    }
+    if (imageUrl.startsWith('http')) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const Icon(
+          Icons.shopping_basket_outlined,
+          color: AppColors.primary,
+        ),
+      );
+    }
+    final file = File(imageUrl);
+    if (file.existsSync()) {
+      return Image.file(
+        file,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const Icon(
+          Icons.shopping_basket_outlined,
+          color: AppColors.primary,
+        ),
+      );
+    }
+    return const Icon(
+      Icons.shopping_basket_outlined,
+      color: AppColors.primary,
     );
   }
 }

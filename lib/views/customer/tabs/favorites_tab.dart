@@ -139,3 +139,4 @@ class FavoritesTab extends StatelessWidget {
     );
   }
 }
+

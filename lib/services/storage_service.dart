@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
+import '../models/cart_item.dart';
 import '../models/order_model.dart';
 import '../models/product.dart';
 import '../models/user_profile.dart';
@@ -97,4 +98,31 @@ class StorageService {
     final raw = jsonEncode(orders.map((e) => e.toJson()).toList());
     await _prefs?.setString(AppConstants.keyPastOrders, raw);
   }
+
+  // --- Cart Persistent Storage (Kept Until WhatsApp Order Sent or Cleared) ---
+  static List<CartItem> loadCart() {
+    final raw = _prefs?.getString(AppConstants.keyCart);
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      return list.map((e) => CartItem.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<void> saveCart(List<CartItem> items) async {
+    final raw = jsonEncode(items.map((e) => e.toJson()).toList());
+    await _prefs?.setString(AppConstants.keyCart, raw);
+  }
+
+  // --- Dynamic Store Categories (Admin Managed, Instantly Broadcast) ---
+  static List<String> loadCustomCategories() {
+    return _prefs?.getStringList(AppConstants.keyCustomCategories) ?? [];
+  }
+
+  static Future<void> saveCustomCategories(List<String> categories) async {
+    await _prefs?.setStringList(AppConstants.keyCustomCategories, categories);
+  }
 }
+
