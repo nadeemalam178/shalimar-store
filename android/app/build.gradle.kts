@@ -6,7 +6,7 @@ plugins {
 android {
     namespace = "com.shalimarstore.app.shalimar_store"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // ndkVersion is not needed for pure Dart/Flutter apps without native C++
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
