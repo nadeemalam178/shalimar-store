@@ -33,7 +33,7 @@ class CloudSyncService {
       _streamSub?.cancel();
       _streamSub = firestore.collection(_collectionPath).snapshots().listen((snapshot) {
         if (snapshot.docs.isNotEmpty) hasSeenNonEmpty = true;
-        if (snapshot.docs.isEmpty && snapshot.metadata.fromCache && !hasSeenNonEmpty) {
+        if (snapshot.docs.isEmpty && snapshot.metadata.isFromCache && !hasSeenNonEmpty) {
           return;
         }
 

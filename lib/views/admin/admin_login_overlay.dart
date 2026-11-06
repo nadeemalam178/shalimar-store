@@ -53,7 +53,7 @@ class _AdminLoginOverlayState extends State<AdminLoginOverlay> {
 
     if (!mounted) return;
     final adminProvider = context.read<AdminProvider>();
-    final success = adminProvider.login(id, pass);
+    final success = await adminProvider.login(id, pass);
 
     setState(() => _isLoading = false);
 

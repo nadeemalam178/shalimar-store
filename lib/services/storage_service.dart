@@ -27,6 +27,55 @@ class StorageService {
     );
   }
 
+  // ── Onboarding ──
+  static bool hasSeenOnboarding() {
+    return _prefs?.getBool(AppConstants.keyHasSeenOnboarding) ?? false;
+  }
+
+  static Future<void> setHasSeenOnboarding(bool value) async {
+    await _prefs?.setBool(AppConstants.keyHasSeenOnboarding, value);
+  }
+
+  // ── User Profile ──
+  static Map<String, dynamic> getUserProfile() {
+    return _prefs?.getString(AppConstants.keyUsername) == null
+        ? {}
+        : {
+            'username': _prefs?.getString(AppConstants.keyUsername) ?? '',
+            'phone': _prefs?.getString(AppConstants.keyStorePhone) ?? '',
+            'email': _prefs?.getString(AppConstants.keyStoreUpi) ?? '',
+          };
+  }
+
+  static Future<void> saveUserProfile(Map<String, dynamic> profile) async {
+    await _prefs?.setString(AppConstants.keyUsername, profile['username'] ?? '');
+    await _prefs?.setString(AppConstants.keyStorePhone, profile['phone'] ?? '');
+    await _prefs?.setString(AppConstants.keyStoreUpi, profile['email'] ?? '');
+  }
+
+  // ── Favorites ──
+  static List<String> loadFavorites() {
+    return _prefs?.getStringList(AppConstants.keyFavorites) ?? [];
+  }
+
+  static Future<void> saveFavorites(List<String> favorites) async {
+    await _prefs?.setStringList(AppConstants.keyFavorites, favorites);
+  }
+
+  // ── Past Orders ──
+  static List<Map<String, dynamic>> loadOrders() {
+    return _prefs?.getStringList(AppConstants.keyPastOrders)
+        ?.map((e) => jsonDecode(e) as Map<String, dynamic>)
+        .toList() ?? [];
+  }
+
+  static Future<void> saveOrders(List<Map<String, dynamic>> orders) async {
+    await _prefs?.setStringList(
+      AppConstants.keyPastOrders,
+      orders.map((e) => jsonEncode(e)).toList(),
+    );
+  }
+
   // ── Products ──
   static Future<List<Product>> loadProducts() async {
     final raw = _prefs?.getString(AppConstants.keyProducts);

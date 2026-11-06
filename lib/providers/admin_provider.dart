@@ -54,6 +54,7 @@ class AdminProvider with ChangeNotifier {
 
   Future<void> logout() async {
     await AdminSessionService.signOut();
+    await AdminAuthService.logout();
     _isLoggedIn = false;
     _isAdminMode = false;
     notifyListeners();
@@ -68,6 +69,28 @@ class AdminProvider with ChangeNotifier {
     if (_isLoggedIn) {
       _isAdminMode = true;
       _startSessionMonitoring();
+      notifyListeners();
     }
+  }
+
+  Future<bool> changePassword(String currentPass, String newPass) async {
+    final success = await AdminAuthService.changePassword(
+      currentPassword: currentPass,
+      newPassword: newPass,
+    );
+    notifyListeners();
+    return success;
+  }
+
+  Future<void> updateAdminId(String newId) async {
+    await AdminAuthService.updateAdminId(newId);
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    AdminSessionService.stopHeartbeat();
+    AdminSessionService.stopTakeoverListener();
+    super.dispose();
   }
 }
