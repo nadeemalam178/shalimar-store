@@ -13,8 +13,7 @@ class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: '741135454571-perjur2oera9cb9os25n4rchlp0v078v.apps.googleusercontent.com',
-    scopes: ['email', 'profile'],
+    scopes: ['email'],
   );
 
   static User? get currentUser => _auth.currentUser;
@@ -103,12 +102,14 @@ class AuthService {
   /// Sign In / Register with Google
   static Future<UserModel> signInWithGoogle() async {
     try {
-      // Clear any prior cached session to prevent stale error states
-      try {
-        await _googleSignIn.signOut();
-      } catch (_) {}
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn().timeout(
+        const Duration(seconds: 45),
+        onTimeout: () => throw FirebaseAuthException(
+          code: 'timeout',
+          message: 'Google Sign-In connection timed out. Please try again.',
+        ),
+      );
 
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         throw FirebaseAuthException(
           code: 'canceled',
@@ -116,13 +117,27 @@ class AuthService {
         );
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication.timeout(
+        const Duration(seconds: 20),
+        onTimeout: () => throw FirebaseAuthException(
+          code: 'timeout',
+          message: 'Google authentication timed out. Please check your internet connection.',
+        ),
+      );
+
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential = await _auth.signInWithCredential(credential).timeout(
+        const Duration(seconds: 25),
+        onTimeout: () => throw FirebaseAuthException(
+          code: 'timeout',
+          message: 'Firebase authorization timed out. Please try again.',
+        ),
+      );
+
       final user = userCredential.user;
       if (user == null) {
         throw FirebaseAuthException(
@@ -163,14 +178,14 @@ class AuthService {
     final now = DateTime.now();
     try {
       final docRef = _firestore.collection('users').doc(user.uid);
-      final doc = await docRef.get();
+      final doc = await docRef.get().timeout(const Duration(seconds: 5));
 
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         data['uid'] = user.uid;
         final existing = UserModel.fromJson(data);
         final updated = existing.copyWith(lastLoginAt: now);
-        await docRef.update({'lastLoginAt': now.toIso8601String()});
+        docRef.update({'lastLoginAt': now.toIso8601String()}).catchError((_) {});
 
         // Cache locally
         await StorageService.saveUserProfile(UserProfile(
@@ -181,7 +196,7 @@ class AuthService {
         return updated;
       }
     } catch (e) {
-      debugPrint('ℹ️ [AuthService] Firestore read error, creating or using cached profile: $e');
+      debugPrint('ℹ️ [AuthService] Firestore read error or timeout, using direct profile: $e');
     }
 
     // New profile or offline fallback
@@ -194,12 +209,15 @@ class AuthService {
       lastLoginAt: now,
     );
 
-    await _syncUserToFirestore(newModel);
+    // Save locally immediately
     await StorageService.saveUserProfile(UserProfile(
       username: newModel.name,
       phone: newModel.phone,
       address: newModel.address,
     ));
+
+    // Sync to Firestore without blocking navigation
+    _syncUserToFirestore(newModel);
 
     return newModel;
   }
