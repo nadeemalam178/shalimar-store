@@ -78,4 +78,37 @@ class CloudSyncService {
       _isSyncing = false;
     }
   }
+
+  /// Sync a single product to Firestore.
+  static Future<void> syncProductToCloud(Product product) async {
+    final firestore = _firestore;
+    if (firestore == null) return;
+    try {
+      final data = product.toJson()..['id'] = product.id;
+      await firestore.collection(_collectionPath).doc(product.id).set(data);
+      debugPrint('☁️ [CloudSync] Synced ${product.id} to cloud');
+    } catch (e) {
+      debugPrint('⚠️ [CloudSync] Failed to sync ${product.id}: $e');
+    }
+  }
+
+  /// Push the entire local catalogue to Firestore.
+  static Future<int> pushFullCatalogueToCloud(List<Product> products) async {
+    final firestore = _firestore;
+    if (firestore == null) return 0;
+    int synced = 0;
+    try {
+      _isSyncing = true;
+      for (final product in products) {
+        await syncProductToCloud(product);
+        synced++;
+      }
+      debugPrint('☁️ [CloudSync] Pushed $synced products to cloud');
+    } catch (e) {
+      debugPrint('⚠️ [CloudSync] Batch push failed: $e');
+    } finally {
+      _isSyncing = false;
+    }
+    return synced;
+  }
 }
