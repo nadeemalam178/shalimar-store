@@ -1,45 +1,42 @@
-# 🛒 Shalimar Store v3.4.0 Release Notes
+# 🛒 Shalimar Store v3.4.1 Release Notes
 
 **Shalimar Store (Est. 1988) — Official Mobile Application**  
 *Serving Trust, Quality & Purity on Ashok Raj Path, Alamganj, Patna — 800007, Bihar*
 
 ---
 
-## 🚀 What's New in Version 3.4.0
+## 🚀 What's New in Version 3.4.1
+
+### 🔄 OTA Update Fix
+- Version bumped to **v3.4.1** so OTA updates now trigger correctly
+- Previous v3.4.0 matched installed version, so no update banner appeared
+- Now: any device on v3.4.0 or older will see the update notification
 
 ### 🔄 Real-Time Cloud Sync
-When the store owner adds, edits, or toggles stock in the admin panel, **every connected customer sees the change within one second**. No separate update required.
-
-- Powered by Firebase Firestore (`products` collection).
-- Offline-first: customers browse last known catalogue when network drops.
-- Deletions propagate — removed products vanish from all phones.
+- Admin changes instantly appear on all customer phones (< 1 second)
+- Powered by Firebase Firestore (`products` collection)
+- Offline-first: customers browse last known catalogue when network drops
+- Deletions propagate too (product removed → gone on all devices)
 
 ### 🔐 Persistent Admin Login
-The owner logs in **once** and stays logged in across app restarts for up to 7 days.
-
-- Credentials: `Shalimar@1988` + `Shal1mar@1988#` (or owner email).
-- Session survives OS updates, phone reboots.
-- Automatic Firebase Auth ensures Firestore rules grant write access.
+- Owner signs in once (`Shalimar@1988` / `Shal1mar@1988#`)
+- 7-day session survives app restarts
+- Automatic Firebase Auth session for Firestore write access
 
 ### 🚫 Single Active Admin Session
-Only **one device** can be logged in as admin at a time.
-
-- If the owner opens admin on Phone B, Phone A is automatically logged out.
-- Takeover detection via `admin_sessions/active` Firestore document.
-- Prevents accidental concurrent edits.
+- Only one device holds admin role at a time
+- New login on another device auto-logs previous device out
+- Takeover detection via `admin_sessions/active` Firestore doc
 
 ### 🖼️ Supabase Storage Images
-Product photos are uploaded to Supabase Storage (1 GB free tier).
-
-- Photos live in bucket `product-images/{productId}/`
-- Public download URLs stored in product document.
-- All customers see the exact same image the owner captured.
+- Photos uploaded to Supabase Storage (1 GB free tier)
+- Public bucket `product-images` with RLS
+- URL saved in product document → all customers see the same image
 
 ### 📦 Clean Production Launch
-No bundled demo products — the store starts completely empty.
-
-- Owner builds the real inventory from day one.
-- Customer empty state: "Store is being stocked… check back soon."
+- Zero bundled demo products
+- Empty store = ready for real inventory
+- Auto-clears old cache when app version changes
 
 ---
 
@@ -57,7 +54,7 @@ No bundled demo products — the store starts completely empty.
 
 - Build triggered: push to `main` branch
 - CI: GitHub Actions (ubuntu-latest, Flutter 3.x)
-- Release created: `v3.4.0` with above release notes
+- Release created: `v3.4.1` with above release notes
 
 ---
 
