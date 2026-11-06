@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
+import '../models/cart_item.dart';
 import '../models/product.dart';
 
 class StorageService {
@@ -13,16 +14,16 @@ class StorageService {
   }
 
   // ── Cart ──
-  static List<Map<String, dynamic>> loadCart() {
+  static List<CartItem> loadCart() {
     return _prefs?.getStringList(AppConstants.keyCart)
-        ?.map((e) => jsonDecode(e) as Map<String, dynamic>)
+        ?.map((e) => CartItem.fromJson(jsonDecode(e) as Map<String, dynamic>))
         .toList() ?? [];
   }
 
-  static Future<void> saveCart(List<Map<String, dynamic>> items) async {
+  static Future<void> saveCart(List<CartItem> items) async {
     await _prefs?.setStringList(
       AppConstants.keyCart,
-      items.map((e) => jsonEncode(e)).toList(),
+      items.map((e) => jsonEncode(e.toJson())).toList(),
     );
   }
 
