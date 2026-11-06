@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../core/constants/app_colors.dart';
 import '../core/theme/theme_extensions.dart';
 import '../providers/cart_provider.dart';
@@ -31,12 +32,12 @@ class BottomDeckDock extends StatelessWidget {
         border: Border.all(color: context.borderSubtle),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(context.isDark ? 0.35 : 0.12),
+            color: Colors.black.withValues(alpha: context.isDark ? 0.35 : 0.12),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
+            color: AppColors.primary.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -66,7 +67,9 @@ class BottomDeckDock extends StatelessWidget {
           _buildDeckItem(
             context,
             index: 2,
-            icon: currentIndex == 2 ? Icons.shopping_bag : Icons.shopping_bag_outlined,
+            icon: currentIndex == 2
+                ? Icons.shopping_bag
+                : Icons.shopping_bag_outlined,
             label: 'My Cart',
             badgeCount: cartCount,
             isSelected: currentIndex == 2,
@@ -100,7 +103,9 @@ class BottomDeckDock extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(isSelected ? 0.45 : 0.25),
+                color: AppColors.primary.withValues(
+                  alpha: isSelected ? 0.45 : 0.25,
+                ),
                 blurRadius: isSelected ? 14 : 8,
                 offset: const Offset(0, 4),
               ),
@@ -140,7 +145,11 @@ class BottomDeckDock extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withValues(alpha: context.isDark ? 0.22 : 0.08) : Colors.transparent,
+          color: isSelected
+              ? AppColors.primary.withValues(
+                  alpha: context.isDark ? 0.22 : 0.08,
+                )
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -196,4 +205,3 @@ class BottomDeckDock extends StatelessWidget {
     );
   }
 }
-

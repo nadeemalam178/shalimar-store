@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/theme_extensions.dart';
 import '../../providers/user_provider.dart';
+import '../../services/auth_service.dart';
+import '../auth/login_screen.dart';
 import '../customer/customer_main_screen.dart';
 import '../onboarding/welcome_onboarding_screen.dart';
 
@@ -27,14 +31,12 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 1200),
     );
 
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeIn,
-    );
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
 
-    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.85,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward();
 
@@ -47,19 +49,22 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _navigateToNextScreen() {
     final user = context.read<UserProvider>();
-    final targetWidget = user.hasSeenOnboarding
-        ? const CustomerMainScreen()
-        : const WelcomeOnboardingScreen();
+    Widget targetWidget;
+
+    if (AuthService.isAuthenticated) {
+      targetWidget = const CustomerMainScreen();
+    } else if (!user.hasSeenOnboarding) {
+      targetWidget = const WelcomeOnboardingScreen();
+    } else {
+      targetWidget = const LoginScreen();
+    }
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 600),
         pageBuilder: (context, animation, secondaryAnimation) => targetWidget,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
+          return FadeTransition(opacity: animation, child: child);
         },
       ),
     );
@@ -74,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: Center(
           child: FadeTransition(
@@ -94,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.18),
+                          color: AppColors.primary.withValues(alpha: 0.18),
                           blurRadius: 24,
                           offset: const Offset(0, 8),
                         ),
@@ -112,13 +117,13 @@ class _SplashScreenState extends State<SplashScreen>
                   const SizedBox(height: 24),
 
                   // Store Name
-                  const Text(
+                  Text(
                     'SHALIMAR STORE',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.5,
-                      color: AppColors.primary,
+                      color: context.textPrimary,
                     ),
                   ),
 
@@ -126,9 +131,12 @@ class _SplashScreenState extends State<SplashScreen>
 
                   // Tagline
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.15),
+                      color: AppColors.accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -136,7 +144,7 @@ class _SplashScreenState extends State<SplashScreen>
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF8A5A00),
+                        color: AppColors.accent,
                       ),
                     ),
                   ),
@@ -148,7 +156,7 @@ class _SplashScreenState extends State<SplashScreen>
                     'Alam Ganj • Ashok Raj Path • Patna-07',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey.shade600,
+                      color: context.textSecondary,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0.3,
                     ),
@@ -162,7 +170,9 @@ class _SplashScreenState extends State<SplashScreen>
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
                     ),
                   ),
                 ],
@@ -174,4 +184,3 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 }
-

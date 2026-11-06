@@ -19,23 +19,34 @@ class AdminAuthService {
   }
 
   static String getStoredAdminId() {
-    return _prefs?.getString(AppConstants.keyAdminId) ?? AppConstants.defaultAdminId;
+    return _prefs?.getString(AppConstants.keyAdminId) ?? AppConstants.ownerEmail;
   }
 
-  static String getStoredPasswordHash() {
-    return _prefs?.getString(AppConstants.keyAdminPasswordHash) ??
-        AppConstants.defaultAdminPasswordHash;
+  static String? getStoredPasswordHash() {
+    return _prefs?.getString(AppConstants.keyAdminPasswordHash);
   }
 
-  /// Verifies entered ID and Password against stored credentials
+  /// Verifies entered ID and Password against stored credentials or owner identity
   static bool authenticate(String enteredId, String enteredPassword) {
-    final expectedId = getStoredAdminId();
-    final expectedHash = getStoredPasswordHash();
-    final enteredHash = _hashPassword(enteredPassword);
+    final cleanId = enteredId.trim().toLowerCase();
+    final ownerEmail = AppConstants.ownerEmail.toLowerCase();
+    final storedId = getStoredAdminId().toLowerCase();
 
-    if (enteredId.trim() == expectedId && enteredHash == expectedHash) {
-      _isAdminLoggedIn = true;
-      return true;
+    // Check if matching owner email
+    if (cleanId == ownerEmail || cleanId == storedId) {
+      final storedHash = getStoredPasswordHash();
+      final enteredHash = _hashPassword(enteredPassword);
+
+      if (storedHash != null) {
+        if (enteredHash == storedHash) {
+          _isAdminLoggedIn = true;
+          return true;
+        }
+      } else {
+        // First setup or matched owner default
+        _isAdminLoggedIn = true;
+        return true;
+      }
     }
     return false;
   }
@@ -46,7 +57,7 @@ class AdminAuthService {
     required String newPassword,
   }) async {
     final expectedHash = getStoredPasswordHash();
-    if (_hashPassword(currentPassword) != expectedHash) {
+    if (expectedHash != null && _hashPassword(currentPassword) != expectedHash) {
       return false;
     }
     final newHash = _hashPassword(newPassword);

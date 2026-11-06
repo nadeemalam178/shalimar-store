@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/theme_extensions.dart';
@@ -8,7 +9,9 @@ class StoreHeritageDialog extends StatelessWidget {
   const StoreHeritageDialog({super.key});
 
   Future<void> _launchMaps() async {
-    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=Alamganj+Ashok+Rajpath+Patna+800007');
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=Alamganj+Ashok+Rajpath+Patna+800007',
+    );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -22,7 +25,9 @@ class StoreHeritageDialog extends StatelessWidget {
   }
 
   Future<void> _launchWhatsApp() async {
-    final uri = Uri.parse('https://wa.me/${AppConstants.ownerWhatsApp}?text=Hello%20Shalimar%20Store%2C%20I%20have%20an%20inquiry%20regarding%20groceries.');
+    final uri = Uri.parse(
+      'https://wa.me/${AppConstants.ownerWhatsApp}?text=Hello%20Shalimar%20Store%2C%20I%20have%20an%20inquiry%20regarding%20groceries.',
+    );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -40,7 +45,9 @@ class StoreHeritageDialog extends StatelessWidget {
           border: Border.all(color: context.borderSubtle),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(context.isDark ? 0.35 : 0.18),
+              color: Colors.black.withValues(
+                alpha: context.isDark ? 0.35 : 0.18,
+              ),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -70,9 +77,9 @@ class StoreHeritageDialog extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withOpacity(0.4),
+                            Colors.black.withValues(alpha: 0.4),
                             Colors.transparent,
-                            Colors.black.withOpacity(0.7),
+                            Colors.black.withValues(alpha: 0.7),
                           ],
                         ),
                       ),
@@ -85,7 +92,11 @@ class StoreHeritageDialog extends StatelessWidget {
                         backgroundColor: Colors.black54,
                         child: IconButton(
                           padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
@@ -98,7 +109,10 @@ class StoreHeritageDialog extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.accent,
                               borderRadius: BorderRadius.circular(12),
@@ -120,7 +134,9 @@ class StoreHeritageDialog extends StatelessWidget {
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
-                              shadows: [Shadow(blurRadius: 4, color: Colors.black87)],
+                              shadows: [
+                                Shadow(blurRadius: 4, color: Colors.black87),
+                              ],
                             ),
                           ),
                         ],
@@ -160,7 +176,9 @@ class StoreHeritageDialog extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: context.isDark ? const Color(0xFF262626) : AppColors.surfaceVariant.withAlpha(120),
+                          color: context.isDark
+                              ? const Color(0xFF262626)
+                              : AppColors.surfaceVariant.withAlpha(120),
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(color: context.borderSubtle),
                         ),
@@ -205,12 +223,23 @@ class StoreHeritageDialog extends StatelessWidget {
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: _launchWhatsApp,
-                              icon: const Icon(Icons.chat_bubble_rounded, size: 16),
-                              label: const Text('WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                              icon: const Icon(
+                                Icons.chat_bubble_rounded,
+                                size: 16,
+                              ),
+                              label: const Text(
+                                'WhatsApp',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.whatsappGreen,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -221,11 +250,26 @@ class StoreHeritageDialog extends StatelessWidget {
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: _launchMaps,
-                              icon: const Icon(Icons.map_rounded, size: 16, color: AppColors.primary),
-                              label: const Text('Directions', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                              icon: const Icon(
+                                Icons.map_rounded,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                              label: const Text(
+                                'Directions',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppColors.primary),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                side: const BorderSide(
+                                  color: AppColors.primary,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -239,10 +283,18 @@ class StoreHeritageDialog extends StatelessWidget {
                         width: double.infinity,
                         child: TextButton.icon(
                           onPressed: _launchCall,
-                          icon: const Icon(Icons.phone, size: 16, color: Colors.grey),
+                          icon: const Icon(
+                            Icons.phone,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                           label: Text(
                             'Call Store Directly: ${AppConstants.ownerPhone}',
-                            style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -257,7 +309,12 @@ class StoreHeritageDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value) {
+  Widget _buildInfoRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -269,12 +326,20 @@ class StoreHeritageDialog extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.textSecondary),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: context.textSecondary,
+                ),
               ),
               const SizedBox(height: 1),
               Text(
                 value,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.textPrimary),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: context.textPrimary,
+                ),
               ),
             ],
           ),
@@ -283,4 +348,3 @@ class StoreHeritageDialog extends StatelessWidget {
     );
   }
 }
-

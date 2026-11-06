@@ -26,7 +26,7 @@ class _StoreSettingsDialogState extends State<StoreSettingsDialog> {
     super.initState();
     // Do not reveal default confidential credentials in text fields
     final storedId = AdminAuthService.getStoredAdminId();
-    if (storedId != AppConstants.defaultAdminId) {
+    if (storedId != AppConstants.ownerEmail) {
       _adminIdCtrl.text = storedId;
     }
   }

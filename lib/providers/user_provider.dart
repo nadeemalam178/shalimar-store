@@ -1,15 +1,21 @@
 import 'package:flutter/foundation.dart';
 import '../models/order_model.dart';
+import '../models/user_model.dart';
 import '../models/user_profile.dart';
+import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 
 class UserProvider with ChangeNotifier {
   UserProfile _profile = const UserProfile(username: '');
+  UserModel? _currentUserModel;
   bool _hasSeenOnboarding = false;
   List<OrderModel> _pastOrders = [];
 
   UserProfile get profile => _profile;
-  String get username => _profile.username;
+  UserModel? get currentUserModel => _currentUserModel;
+  String get username => _currentUserModel?.name ?? _profile.username;
+  String get email => _currentUserModel?.email ?? '';
+  bool get isAuthenticated => AuthService.isAuthenticated;
   bool get hasSeenOnboarding => _hasSeenOnboarding;
   List<OrderModel> get pastOrders => _pastOrders;
   List<String> get favoriteProductIds => _profile.favoriteProductIds;
@@ -22,6 +28,22 @@ class UserProvider with ChangeNotifier {
       _profile = _profile.copyWith(favoriteProductIds: savedFavs);
     }
     _pastOrders = StorageService.loadOrders();
+    notifyListeners();
+  }
+
+  void setCurrentUser(UserModel userModel) {
+    _currentUserModel = userModel;
+    _profile = _profile.copyWith(
+      username: userModel.name,
+      phone: userModel.phone.isNotEmpty ? userModel.phone : _profile.phone,
+      address: userModel.address.isNotEmpty ? userModel.address : _profile.address,
+    );
+    notifyListeners();
+  }
+
+  Future<void> logout() async {
+    await AuthService.signOut();
+    _currentUserModel = null;
     notifyListeners();
   }
 

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -118,7 +119,10 @@ class _CartTabState extends State<CartTab> {
         deliveryAddress: address,
       );
       await user.addOrder(newOrder);
-      await NotificationService.showOrderPlacedNotification(newOrder.id, totalAmount);
+      await NotificationService.showOrderPlacedNotification(
+        newOrder.id,
+        totalAmount,
+      );
 
       // Clear cart
       cart.clearCart();
@@ -180,7 +184,7 @@ class _CartTabState extends State<CartTab> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.08),
+                      color: AppColors.primary.withValues(alpha: 0.08),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -275,7 +279,9 @@ class _CartTabState extends State<CartTab> {
                       border: Border.all(color: context.borderSubtle),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(context.isDark ? 0.25 : 0.03),
+                          color: Colors.black.withValues(
+                            alpha: context.isDark ? 0.25 : 0.03,
+                          ),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -288,12 +294,16 @@ class _CartTabState extends State<CartTab> {
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: context.isDark ? const Color(0xFF262626) : AppColors.surfaceVariant,
+                            color: context.isDark
+                                ? const Color(0xFF262626)
+                                : AppColors.surfaceVariant,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: _buildProductThumbnail(item.product.imageUrl),
+                            child: _buildProductThumbnail(
+                              item.product.imageUrl,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -337,7 +347,9 @@ class _CartTabState extends State<CartTab> {
                         // Quantity selector
                         Container(
                           decoration: BoxDecoration(
-                            color: context.isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade100,
+                            color: context.isDark
+                                ? const Color(0xFF2A2A2A)
+                                : Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: context.borderSubtle),
                           ),
@@ -461,7 +473,9 @@ class _CartTabState extends State<CartTab> {
                   border: Border.all(color: context.borderSubtle),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(context.isDark ? 0.25 : 0.03),
+                      color: Colors.black.withValues(
+                        alpha: context.isDark ? 0.25 : 0.03,
+                      ),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -478,7 +492,10 @@ class _CartTabState extends State<CartTab> {
                         ),
                         Text(
                           CurrencyFormatter.format(cart.totalMrp),
-                          style: TextStyle(fontWeight: FontWeight.w600, color: context.textPrimary),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: context.textPrimary,
+                          ),
                         ),
                       ],
                     ),
@@ -624,7 +641,11 @@ class _CartTabState extends State<CartTab> {
       decoration: BoxDecoration(
         color: context.isDark ? const Color(0xFF241E12) : Colors.amber.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.isDark ? const Color(0xFFC68400) : Colors.amber.shade300),
+        border: Border.all(
+          color: context.isDark
+              ? const Color(0xFFC68400)
+              : Colors.amber.shade300,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -643,7 +664,9 @@ class _CartTabState extends State<CartTab> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
-                    color: context.isDark ? const Color(0xFFFFD54F) : const Color(0xFF7F4E00),
+                    color: context.isDark
+                        ? const Color(0xFFFFD54F)
+                        : const Color(0xFF7F4E00),
                   ),
                 ),
               ),
@@ -655,7 +678,9 @@ class _CartTabState extends State<CartTab> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: context.isDark ? const Color(0xFF1B150A) : Colors.white,
+                    color: context.isDark
+                        ? const Color(0xFF1B150A)
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.amber.shade400),
                   ),
@@ -664,7 +689,9 @@ class _CartTabState extends State<CartTab> {
                       Icon(
                         Icons.copy,
                         size: 12,
-                        color: context.isDark ? const Color(0xFFFFD54F) : const Color(0xFF7F4E00),
+                        color: context.isDark
+                            ? const Color(0xFFFFD54F)
+                            : const Color(0xFF7F4E00),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -672,7 +699,9 @@ class _CartTabState extends State<CartTab> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: context.isDark ? const Color(0xFFFFD54F) : const Color(0xFF7F4E00),
+                          color: context.isDark
+                              ? const Color(0xFFFFD54F)
+                              : const Color(0xFF7F4E00),
                         ),
                       ),
                     ],
@@ -684,14 +713,15 @@ class _CartTabState extends State<CartTab> {
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: context.isDark ? const Color(0xFF1B150A) : Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: context.isDark ? const Color(0xFF4A3B18) : Colors.amber.shade200),
+              border: Border.all(
+                color: context.isDark
+                    ? const Color(0xFF4A3B18)
+                    : Colors.amber.shade200,
+              ),
             ),
             child: const SelectableText(
               AppConstants.ownerUpiId,
@@ -706,10 +736,7 @@ class _CartTabState extends State<CartTab> {
           const SizedBox(height: 6),
           Text(
             'Accepted on all UPI apps: PhonePe, Google Pay, Paytm, BHIM, Cred. Zero gateway charges.',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade700,
-            ),
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
           ),
         ],
       ),
@@ -744,9 +771,6 @@ class _CartTabState extends State<CartTab> {
         ),
       );
     }
-    return const Icon(
-      Icons.shopping_basket_outlined,
-      color: AppColors.primary,
-    );
+    return const Icon(Icons.shopping_basket_outlined, color: AppColors.primary);
   }
 }

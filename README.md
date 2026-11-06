@@ -2,7 +2,7 @@
   <img src="assets/images/logo.png" width="140" alt="Shalimar Store Logo" />
 </p>
 
-<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.1.0)</h1>
+<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.2.0)</h1>
 
 <p align="center">
   <b>Official Dual-Mode Kirana & General Store Mobile Application</b><br>
@@ -10,8 +10,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v3.1.0-crimson" alt="Version" />
-  <img src="https://img.shields.io/badge/Firebase-Firestore%20Spark%20Tier-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
+  <img src="https://img.shields.io/badge/Version-v3.2.0-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
+  <img src="https://img.shields.io/badge/Auth-Email%20%7C%20Google%20Sign--In-blue" alt="Authentication" />
   <img src="https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Dart-3.13+-0175C2?logo=dart&logoColor=white" alt="Dart" />
   <img src="https://img.shields.io/badge/Typography-Plus%20Jakarta%20Sans-indigo" alt="Plus Jakarta Sans" />
@@ -35,7 +36,28 @@ Established in **1988** by Mohammad Jamil, **Shalimar General Store** has been a
 
 ---
 
-## 🚀 What's New in v3.1.0 (Firebase Cloud Sync & In-App Direct OTA Updates)
+## 🚀 What's New in v3.2.0 (Compulsory Customer Registration & Google Auth)
+
+- 🔐 **Compulsory Customer Authentication (Zero Guest Access):**
+  - Unauthenticated access to the catalog is blocked. Customers must register or sign in to browse and order.
+  - Persistent sessions: customers stay signed in across device restarts.
+  - 1-tap Sign Out flow built into customer profile dialog.
+- ⚡ **Dual Authentication Providers:**
+  - **Full Name, Email & Password Registration:** Easy registration form with real-time Firebase profile creation.
+  - **Continue with Google:** 1-tap Google Sign-In with automatic name, email, and photo syncing.
+  - **Password Recovery:** Direct password reset email delivery.
+- ☁️ **Customer Database (`users/{uid}`):**
+  - Auto-syncs registered customer records to Cloud Firestore.
+  - Protected by strict Firestore Security Rules (`firestore.rules`).
+- 🌓 **AMOLED Dark Mode Overhaul for Entry Screens:**
+  - Splash screen rebuilt with `#121212` background and zero blinding white flashes.
+  - Onboarding carousel and Login screens natively designed for AMOLED dark mode.
+- 🛡️ **Owner Hardening:**
+  - Purged hardcoded admin IDs and hashes from source code; bound to verified owner identity (`AppConstants.ownerEmail`).
+
+---
+
+## 📦 What's New in v3.1.0
 
 - 📲 **In-App Direct OTA Updates:** Updates download directly inside the app with a streaming byte progress bar and automatically trigger Android's native package installer (`open_filex`). No external browser or Chrome redirects required.
 - ☁️ **Google Firebase Cloud Sync:** Full integration with Google Firebase Firestore (`shalimar-store`) on the Free Spark Tier. Products, stock levels, and prices sync in real time across owner and customer phones.

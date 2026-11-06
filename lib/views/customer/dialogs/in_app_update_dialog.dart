@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_extensions.dart';
 import '../../../services/update_service.dart';
@@ -95,7 +96,9 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
           border: Border.all(color: context.borderSubtle),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(context.isDark ? 0.4 : 0.15),
+              color: Colors.black.withValues(
+                alpha: context.isDark ? 0.4 : 0.15,
+              ),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -146,7 +149,11 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
                 ),
                 if (!_isDownloading)
                   IconButton(
-                    icon: Icon(Icons.close, size: 20, color: context.textSecondary),
+                    icon: Icon(
+                      Icons.close,
+                      size: 20,
+                      color: context.textSecondary,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
               ],
@@ -165,7 +172,11 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -200,16 +211,26 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
                 decoration: BoxDecoration(
                   color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: AppColors.success.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.check_circle_rounded, color: AppColors.success, size: 24),
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.success,
+                      size: 24,
+                    ),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Download completed! Android Package Installer launched.',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.success),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.success,
+                        ),
                       ),
                     ),
                   ],
@@ -219,7 +240,8 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => UpdateService.installApk(_downloadedFilePath!),
+                  onPressed: () =>
+                      UpdateService.installApk(_downloadedFilePath!),
                   icon: const Icon(Icons.install_mobile_rounded),
                   label: const Text('Re-launch Package Installer'),
                 ),
@@ -232,7 +254,9 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
                   value: _totalBytes > 0 ? _progress : null,
                   minHeight: 10,
                   backgroundColor: context.borderSubtle,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.primary,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -248,7 +272,10 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -278,4 +305,3 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
     );
   }
 }
-

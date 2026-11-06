@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shalimar_store/models/product.dart';
+import 'package:shalimar_store/models/user_model.dart';
 import 'package:shalimar_store/services/storage_service.dart';
 import 'package:shalimar_store/services/update_service.dart';
 
@@ -57,6 +58,32 @@ void main() {
       expect(reconstructed.price, equals(original.price));
       expect(reconstructed.inStock, equals(original.inStock));
       expect(reconstructed.discountPercent, equals(13.0));
+    });
+  });
+
+  group('UserModel Serialization', () {
+    test('UserModel serializes and deserializes accurately', () {
+      final now = DateTime.now();
+      final user = UserModel(
+        uid: 'usr_test_123',
+        name: 'Md. Nadeem',
+        email: 'nadeem@gmail.com',
+        phone: '9876543210',
+        address: 'Alamganj, Patna',
+        role: 'customer',
+        provider: 'password',
+        createdAt: now,
+        lastLoginAt: now,
+        appVersion: 'v3.2.0',
+      );
+
+      final json = user.toJson();
+      final restored = UserModel.fromJson(json);
+
+      expect(restored.uid, equals('usr_test_123'));
+      expect(restored.name, equals('Md. Nadeem'));
+      expect(restored.email, equals('nadeem@gmail.com'));
+      expect(restored.isOwner, isFalse);
     });
   });
 }

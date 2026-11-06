@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shalimar_store/core/constants/app_constants.dart';
 import 'package:shalimar_store/models/product.dart';
 import 'package:shalimar_store/providers/cart_provider.dart';
 import 'package:shalimar_store/services/admin_auth_service.dart';
@@ -68,8 +69,8 @@ void main() {
 
       // Test secure owner credentials pass
       final isAuth = AdminAuthService.authenticate(
-        'Shalimar@1988',
-        r'Shal1mar@1988#',
+        AppConstants.ownerEmail,
+        'secureOwnerPass123',
       );
       expect(isAuth, isTrue);
       expect(AdminAuthService.isLoggedIn, isTrue);

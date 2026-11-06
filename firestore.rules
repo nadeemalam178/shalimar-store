@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'nadeemalam178@gmail.com' ||
+        request.auth.uid == 'owner_uid_placeholder'
+      );
+    }
+
+    function isUserSelf(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Products Collection:
+    // - Authenticated customers and owner can read
+    // - Only store owner can create, update, or delete products
+    match /products/{productId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner();
+    }
+
+    // Users Collection:
+    // - Customer can read and write only their own profile
+    // - Store owner can read all customer profiles for analytics
+    // - Customers cannot elevate their own role to 'owner'
+    match /users/{userId} {
+      allow read: if isUserSelf(userId) || isOwner();
+      allow create: if isUserSelf(userId) && request.resource.data.role == 'customer';
+      allow update: if isUserSelf(userId) && request.resource.data.role == resource.data.role;
+      allow delete: if isOwner();
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

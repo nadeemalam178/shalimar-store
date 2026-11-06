@@ -1,6 +1,8 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/theme_extensions.dart';
@@ -31,7 +33,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     super.dispose();
   }
 
-  void _showAddCategoryDialog(BuildContext context, CatalogueProvider catalogue) {
+  void _showAddCategoryDialog(
+    BuildContext context,
+    CatalogueProvider catalogue,
+  ) {
     final textController = TextEditingController();
     showDialog(
       context: context,
@@ -41,7 +46,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           children: [
             Icon(Icons.category_rounded, color: AppColors.primary),
             SizedBox(width: 8),
-            Text('Add New Category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              'Add New Category',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: Column(
@@ -60,7 +68,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               decoration: InputDecoration(
                 labelText: 'Category Name',
                 hintText: 'e.g. Organic Pulses, Frozen Foods, Cold Drinks',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -110,11 +120,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
 
     final displayedItems = allItems.where((p) {
-      final matchesCategory = _selectedCategory == 'All' || p.category == _selectedCategory;
-      final matchesStock = _selectedStockFilter == 'All' ||
+      final matchesCategory =
+          _selectedCategory == 'All' || p.category == _selectedCategory;
+      final matchesStock =
+          _selectedStockFilter == 'All' ||
           (_selectedStockFilter == 'In Stock' && p.inStock) ||
           (_selectedStockFilter == 'Out of Stock' && !p.inStock);
-      final matchesSearch = _searchFilter.isEmpty ||
+      final matchesSearch =
+          _searchFilter.isEmpty ||
           p.name.toLowerCase().contains(_searchFilter.toLowerCase()) ||
           p.category.toLowerCase().contains(_searchFilter.toLowerCase()) ||
           p.unit.toLowerCase().contains(_searchFilter.toLowerCase());
@@ -146,7 +159,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 Text(
                   'Admin Management',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.textPrimary),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: context.textPrimary,
+                  ),
                 ),
                 Text(
                   'Shalimar Store Control Panel',
@@ -168,7 +185,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.exit_to_app_rounded, color: AppColors.primary),
+            icon: const Icon(
+              Icons.exit_to_app_rounded,
+              color: AppColors.primary,
+            ),
             tooltip: 'Switch to Customer View',
             onPressed: () => admin.exitAdminMode(),
           ),
@@ -183,7 +203,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         },
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('Add Product', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text(
+          'Add Product',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
@@ -244,7 +267,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       border: Border.all(color: context.borderSubtle),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(context.isDark ? 0.25 : 0.04),
+                          color: Colors.black.withValues(
+                            alpha: context.isDark ? 0.25 : 0.04,
+                          ),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -253,14 +278,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: TextField(
                       controller: _searchController,
                       onChanged: (val) => setState(() => _searchFilter = val),
-                      style: TextStyle(color: context.textPrimary, fontSize: 13),
+                      style: TextStyle(
+                        color: context.textPrimary,
+                        fontSize: 13,
+                      ),
                       decoration: InputDecoration(
-                        hintText: 'Search 1,000+ items by name, unit, category...',
-                        hintStyle: TextStyle(fontSize: 13, color: context.textSecondary),
-                        prefixIcon: const Icon(Icons.search, size: 22, color: AppColors.primary),
+                        hintText:
+                            'Search 1,000+ items by name, unit, category...',
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: context.textSecondary,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          size: 22,
+                          color: AppColors.primary,
+                        ),
                         suffixIcon: _searchFilter.isNotEmpty
                             ? IconButton(
-                                icon: Icon(Icons.clear, size: 18, color: context.textSecondary),
+                                icon: Icon(
+                                  Icons.clear,
+                                  size: 18,
+                                  color: context.textSecondary,
+                                ),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() => _searchFilter = '');
@@ -269,7 +309,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             : null,
                         filled: true,
                         fillColor: Colors.transparent,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -285,11 +328,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     physics: const BouncingScrollPhysics(),
                     child: Row(
                       children: [
-                        _buildStockFilterChip('All', 'All (${allItems.length})'),
+                        _buildStockFilterChip(
+                          'All',
+                          'All (${allItems.length})',
+                        ),
                         const SizedBox(width: 8),
-                        _buildStockFilterChip('In Stock', 'In Stock ($inStockCount)'),
+                        _buildStockFilterChip(
+                          'In Stock',
+                          'In Stock ($inStockCount)',
+                        ),
                         const SizedBox(width: 8),
-                        _buildStockFilterChip('Out of Stock', 'Out of Stock ($outOfStockCount)', isDanger: true),
+                        _buildStockFilterChip(
+                          'Out of Stock',
+                          'Out of Stock ($outOfStockCount)',
+                          isDanger: true,
+                        ),
                       ],
                     ),
                   ),
@@ -302,16 +355,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     children: [
                       const Text(
                         'Categories Filter',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
                       ),
                       InkWell(
                         onTap: () => _showAddCategoryDialog(context, catalogue),
                         borderRadius: BorderRadius.circular(20),
                         child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           child: Row(
                             children: [
-                              Icon(Icons.add_circle_outline, size: 14, color: AppColors.primary),
+                              Icon(
+                                Icons.add_circle_outline,
+                                size: 14,
+                                color: AppColors.primary,
+                              ),
                               SizedBox(width: 4),
                               Text(
                                 '+ Add Category',
@@ -340,12 +404,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         if (index == catalogue.categories.length) {
                           // "+ Add Category" Chip
                           return ActionChip(
-                            avatar: const Icon(Icons.add, size: 16, color: AppColors.primary),
-                            label: const Text('New Category', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.bold)),
-                            backgroundColor: AppColors.primary.withOpacity(0.08),
-                            side: const BorderSide(color: AppColors.primary, width: 1),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            onPressed: () => _showAddCategoryDialog(context, catalogue),
+                            avatar: const Icon(
+                              Icons.add,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
+                            label: const Text(
+                              'New Category',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            backgroundColor: AppColors.primary.withValues(
+                              alpha: 0.08,
+                            ),
+                            side: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            onPressed: () =>
+                                _showAddCategoryDialog(context, catalogue),
                           );
                         }
 
@@ -366,16 +449,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 '$cat ($count)',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  color: isSelected ? Colors.white : context.textPrimary,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : context.textPrimary,
                                 ),
                               ),
                               if (outCount > 0 && cat != 'All') ...[
                                 const SizedBox(width: 4),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? Colors.white : Colors.red,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.red,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -383,7 +475,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.red : Colors.white,
+                                      color: isSelected
+                                          ? Colors.red
+                                          : Colors.white,
                                     ),
                                   ),
                                 ),
@@ -396,7 +490,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                             side: BorderSide(
-                              color: isSelected ? AppColors.primary : context.borderSubtle,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : context.borderSubtle,
                             ),
                           ),
                           onSelected: (selected) {
@@ -415,9 +511,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     children: [
                       Text(
                         'Showing ${displayedItems.length} items',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
                       ),
-                      if (_selectedCategory != 'All' || _selectedStockFilter != 'All' || _searchFilter.isNotEmpty)
+                      if (_selectedCategory != 'All' ||
+                          _selectedStockFilter != 'All' ||
+                          _searchFilter.isNotEmpty)
                         TextButton(
                           onPressed: () {
                             _searchController.clear();
@@ -427,7 +529,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               _searchFilter = '';
                             });
                           },
-                          child: const Text('Reset Filters', style: TextStyle(fontSize: 11, color: AppColors.primary)),
+                          child: const Text(
+                            'Reset Filters',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.primary,
+                            ),
+                          ),
                         ),
                     ],
                   ),
@@ -444,11 +552,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.shade400),
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 48,
+                            color: Colors.grey.shade400,
+                          ),
                           const SizedBox(height: 12),
                           const Text(
                             'No products match your filter',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
                           ),
                         ],
                       ),
@@ -458,114 +574,132 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               : SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final item = displayedItems[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: context.surfaceColor,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: item.inStock ? context.borderSubtle : Colors.red.shade400,
-                              width: item.inStock ? 1 : 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(context.isDark ? 0.25 : 0.02),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final item = displayedItems[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: context.surfaceColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: item.inStock
+                                ? context.borderSubtle
+                                : Colors.red.shade400,
+                            width: item.inStock ? 1 : 1.5,
                           ),
-                          child: Row(
-                            children: [
-                              // Image or placeholder with local file support
-                              Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  color: context.isDark ? const Color(0xFF262626) : AppColors.surfaceVariant,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: _buildItemImage(item.imageUrl),
-                                ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: context.isDark ? 0.25 : 0.02,
                               ),
-                              const SizedBox(width: 12),
-
-                              // Info
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.name,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: item.inStock ? context.textPrimary : context.textSecondary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${item.category} • ${item.unit}',
-                                      style: TextStyle(fontSize: 11, color: context.textSecondary),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      CurrencyFormatter.format(item.price),
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w900,
-                                        color: item.inStock ? AppColors.primary : Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            // Image or placeholder with local file support
+                            Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: context.isDark
+                                    ? const Color(0xFF262626)
+                                    : AppColors.surfaceVariant,
+                                borderRadius: BorderRadius.circular(10),
                               ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: _buildItemImage(item.imageUrl),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
 
-                              // Stock Switch (1-tap toggle)
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
+                            // Info
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Switch(
-                                    value: item.inStock,
-                                    activeThumbColor: AppColors.success,
-                                    inactiveThumbColor: Colors.red,
-                                    onChanged: (_) => catalogue.toggleStock(item.id),
-                                  ),
                                   Text(
-                                    item.inStock ? 'In Stock' : 'Out of Stock',
+                                    item.name,
                                     style: TextStyle(
-                                      fontSize: 9,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: item.inStock ? AppColors.success : Colors.red,
+                                      color: item.inStock
+                                          ? context.textPrimary
+                                          : context.textSecondary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${item.category} • ${item.unit}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: context.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    CurrencyFormatter.format(item.price),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                      color: item.inStock
+                                          ? AppColors.primary
+                                          : Colors.grey,
                                     ),
                                   ),
                                 ],
                               ),
+                            ),
 
-                              // Edit Button
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.grey),
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) => AddEditProductDialog(productToEdit: item),
-                                  );
-                                },
+                            // Stock Switch (1-tap toggle)
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Switch(
+                                  value: item.inStock,
+                                  activeThumbColor: AppColors.success,
+                                  inactiveThumbColor: Colors.red,
+                                  onChanged: (_) =>
+                                      catalogue.toggleStock(item.id),
+                                ),
+                                Text(
+                                  item.inStock ? 'In Stock' : 'Out of Stock',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: item.inStock
+                                        ? AppColors.success
+                                        : Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            // Edit Button
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit_outlined,
+                                size: 20,
+                                color: Colors.grey,
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                      childCount: displayedItems.length,
-                    ),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) =>
+                                      AddEditProductDialog(productToEdit: item),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }, childCount: displayedItems.length),
                   ),
                 ),
         ],
@@ -573,7 +707,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildStockFilterChip(String key, String label, {bool isDanger = false}) {
+  Widget _buildStockFilterChip(
+    String key,
+    String label, {
+    bool isDanger = false,
+  }) {
     final isSelected = _selectedStockFilter == key;
     return ChoiceChip(
       label: Text(
@@ -588,7 +726,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
       selected: isSelected,
       selectedColor: isDanger ? Colors.red : AppColors.primary,
-      backgroundColor: isDanger ? (context.isDark ? const Color(0xFF2B1212) : Colors.red.shade50) : context.surfaceColor,
+      backgroundColor: isDanger
+          ? (context.isDark ? const Color(0xFF2B1212) : Colors.red.shade50)
+          : context.surfaceColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
@@ -615,13 +755,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: context.isDark ? const Color(0xFF142918) : AppColors.success.withValues(alpha: 0.08),
+          color: context.isDark
+              ? const Color(0xFF142918)
+              : AppColors.success.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 22),
+            const Icon(
+              Icons.check_circle_rounded,
+              color: AppColors.success,
+              size: 22,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -629,11 +775,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 children: [
                   const Text(
                     '100% Stock Availability',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.success),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.success,
+                    ),
                   ),
                   Text(
                     'All products across all categories are currently in stock.',
-                    style: TextStyle(fontSize: 11, color: context.textSecondary),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: context.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -647,13 +800,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       decoration: BoxDecoration(
         color: context.isDark ? const Color(0xFF261212) : Colors.red.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.isDark ? const Color(0xFF5E1B1B) : Colors.red.shade200),
+        border: Border.all(
+          color: context.isDark ? const Color(0xFF5E1B1B) : Colors.red.shade200,
+        ),
       ),
       child: Column(
         children: [
           // Collapsible Header
           InkWell(
-            onTap: () => setState(() => _isBreakdownExpanded = !_isBreakdownExpanded),
+            onTap: () =>
+                setState(() => _isBreakdownExpanded = !_isBreakdownExpanded),
             borderRadius: BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -665,7 +821,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       color: Colors.red.shade100,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+                    child: const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.red,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -674,17 +834,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       children: [
                         const Text(
                           'Out-of-Stock Inventory Dashboard',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
                         ),
                         Text(
                           '$outOfStockCount items out of stock across ${outOfStockByCategory.length} categories',
-                          style: TextStyle(fontSize: 11, color: Colors.red.shade700),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.red.shade700,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   Icon(
-                    _isBreakdownExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    _isBreakdownExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
                     color: Colors.red,
                   ),
                 ],
@@ -700,7 +869,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: outOfStockByCategory.keys.length,
               itemBuilder: (context, catIdx) {
-                final categoryName = outOfStockByCategory.keys.elementAt(catIdx);
+                final categoryName = outOfStockByCategory.keys.elementAt(
+                  catIdx,
+                );
                 final items = outOfStockByCategory[categoryName]!;
 
                 return Container(
@@ -719,22 +890,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.folder_open_rounded, size: 16, color: Colors.red),
+                              const Icon(
+                                Icons.folder_open_rounded,
+                                size: 16,
+                                color: Colors.red,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 categoryName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
                               const SizedBox(width: 6),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 1,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.red,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
                                   '${items.length} missing',
-                                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
@@ -747,10 +932,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               });
                             },
                             child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 2,
+                              ),
                               child: Text(
                                 'Filter list below →',
-                                style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -764,7 +956,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Row(
                             children: [
-                              const Icon(Icons.circle, size: 6, color: Colors.red),
+                              const Icon(
+                                Icons.circle,
+                                size: 6,
+                                color: Colors.red,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -776,7 +972,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ),
                               Text(
                                 CurrencyFormatter.format(prod.price),
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton(
@@ -784,7 +983,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   catalogue.toggleStock(prod.id);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('${prod.name} marked IN STOCK!'),
+                                      content: Text(
+                                        '${prod.name} marked IN STOCK!',
+                                      ),
                                       backgroundColor: AppColors.success,
                                       duration: const Duration(seconds: 1),
                                     ),
@@ -793,13 +994,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.success,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   minimumSize: const Size(0, 28),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
-                                child: const Text('Restock', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                child: const Text(
+                                  'Restock',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -830,7 +1040,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         border: Border.all(color: context.borderSubtle),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(context.isDark ? 0.25 : 0.02),
+            color: Colors.black.withValues(alpha: context.isDark ? 0.25 : 0.02),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -852,7 +1062,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(height: 2),
           Text(
             title,
-            style: TextStyle(fontSize: 10, color: context.textSecondary, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 10,
+              color: context.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/theme_extensions.dart';
 import '../../providers/user_provider.dart';
-import '../customer/customer_main_screen.dart';
+import '../auth/login_screen.dart';
 
 class WelcomeOnboardingScreen extends StatefulWidget {
   const WelcomeOnboardingScreen({super.key});
@@ -14,39 +15,28 @@ class WelcomeOnboardingScreen extends StatefulWidget {
 
 class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
   final PageController _pageController = PageController();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
   int _currentPage = 0;
 
   @override
   void dispose() {
     _pageController.dispose();
-    _usernameController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
   void _finishOnboarding() {
-    final name = _usernameController.text.trim();
     final user = context.read<UserProvider>();
-    user.completeOnboarding(
-      name.isNotEmpty ? name : 'Valued Customer',
-      phone: _phoneController.text.trim(),
-      address: _addressController.text.trim(),
-    );
+    user.completeOnboarding('Customer');
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -71,13 +61,13 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         'SHALIMAR STORE',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
-                          color: AppColors.primary,
+                          color: context.textPrimary,
                         ),
                       ),
                     ],
@@ -91,7 +81,10 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
                           curve: Curves.easeInOut,
                         );
                       },
-                      child: const Text('Skip', style: TextStyle(color: Colors.grey)),
+                      child: Text(
+                        'Skip',
+                        style: TextStyle(color: context.textSecondary),
+                      ),
                     ),
                 ],
               ),
@@ -107,7 +100,7 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
                   _buildWelcomeSlide(),
                   _buildCatalogWalkSlide(),
                   _buildOrderWalkSlide(),
-                  _buildUsernameCreationSlide(),
+                  _buildAuthIntroductionSlide(),
                 ],
               ),
             ),
@@ -128,7 +121,9 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
                         width: isActive ? 24 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: isActive ? AppColors.primary : Colors.grey.shade300,
+                          color: isActive
+                              ? AppColors.primary
+                              : (context.isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade300),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
@@ -148,15 +143,19 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(_currentPage == 3 ? 'Get Started' : 'Next'),
+                        Text(
+                          _currentPage == 3 ? 'Sign In / Register' : 'Next',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(width: 6),
-                        const Icon(Icons.arrow_forward_rounded, size: 18),
+                        const Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
                       ],
                     ),
                   ),
@@ -175,7 +174,6 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // High Quality Logo with Glow
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -183,7 +181,7 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.accent.withOpacity(0.3),
+                  color: AppColors.accent.withValues(alpha: 0.3),
                   blurRadius: 28,
                   offset: const Offset(0, 8),
                 ),
@@ -192,20 +190,20 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
             child: ClipOval(
               child: Image.asset(
                 AppConstants.logoPath,
-                width: 170,
-                height: 170,
+                width: 160,
+                height: 160,
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          const SizedBox(height: 32),
-          const Text(
+          const SizedBox(height: 28),
+          Text(
             'Welcome to\nShalimar Store',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: FontWeight.w900,
-              color: AppColors.darkText,
+              color: context.textPrimary,
               height: 1.2,
             ),
           ),
@@ -213,7 +211,7 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.2),
+              color: AppColors.accent.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
@@ -221,7 +219,7 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF8A5B00),
+                color: AppColors.accent,
                 letterSpacing: 0.8,
               ),
             ),
@@ -230,11 +228,7 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
           Text(
             'Your trusted neighborhood general store now at your fingertips. Discover fresh groceries, daily staples, spices, and household essentials.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 13, color: context.textSecondary, height: 1.5),
           ),
         ],
       ),
@@ -248,44 +242,32 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              gradient: AppColors.brandGradient,
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
             ),
             child: const Icon(
               Icons.storefront_rounded,
               size: 80,
-              color: Colors.white,
+              color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 36),
-          const Text(
-            'Explore the Full\nStore Catalogue',
+          const SizedBox(height: 28),
+          Text(
+            'Live Cloud Catalogue',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w900,
-              color: AppColors.darkText,
-              height: 1.2,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 14),
           Text(
-            'Browse dozens of daily grocery categories: Atta, Basmati Rice, Cooking Oils, Spices, Dairy, Soaps, and Teas.\n\nEnjoy transparent MRP discounts and instant stock availability.',
+            'Browse over hundreds of daily essentials with real-time stock updates, genuine shop prices, discount badges, and photo previews updated live by the store owner.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 13, color: context.textSecondary, height: 1.5),
           ),
         ],
       ),
@@ -299,51 +281,39 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.whatsappGreen,
+              color: AppColors.whatsappGreen.withValues(alpha: 0.12),
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.whatsappGreen.withOpacity(0.3),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
             ),
             child: const Icon(
               Icons.chat_bubble_outline_rounded,
               size: 80,
-              color: Colors.white,
+              color: AppColors.whatsappGreen,
             ),
           ),
-          const SizedBox(height: 36),
-          const Text(
-            'Direct WhatsApp Orders\n& Zero-Fee UPI',
+          const SizedBox(height: 28),
+          Text(
+            'Direct WhatsApp Orders',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w900,
-              color: AppColors.darkText,
-              height: 1.2,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 14),
           Text(
-            'No complicated payment gateways or commissions.\n\nAdd your favorite grocery items and tap to dispatch your order straight to the store owner on WhatsApp (${AppConstants.ownerPhone}) with UPI pay support!',
+            'No middleman fees or complicated checkouts. Add items to cart and dispatch your order straight to the store owner on WhatsApp with 1-tap UPI payment support.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 13, color: context.textSecondary, height: 1.5),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildUsernameCreationSlide() {
+  Widget _buildAuthIntroductionSlide() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       physics: const BouncingScrollPhysics(),
@@ -352,80 +322,70 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
         children: [
           const SizedBox(height: 20),
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
+              color: AppColors.primary.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.person_pin_rounded,
+              Icons.verified_user_rounded,
               size: 64,
               color: AppColors.primary,
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Create Your Profile',
+          Text(
+            'Sign In to Shalimar Store',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 26,
+              fontSize: 24,
               fontWeight: FontWeight.w900,
-              color: AppColors.darkText,
+              color: context.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            'Your name will be displayed on the store top-bar and used for order delivery.',
+            'To ensure authentic doorstep delivery and secure order tracking, please sign in with your Email & Password or Continue with Google.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: context.textSecondary, height: 1.5),
           ),
           const SizedBox(height: 28),
 
-          // Username Field
-          TextField(
-            controller: _usernameController,
-            decoration: InputDecoration(
-              labelText: 'What is your Name? *',
-              hintText: 'e.g. Nadeem Alam / Rahul',
-              prefixIcon: const Icon(Icons.person, color: AppColors.primary),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+          // Security & Benefit Pills
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: context.surfaceColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.borderSubtle),
             ),
-          ),
-          const SizedBox(height: 12),
-
-          // Phone Field
-          TextField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              labelText: 'Phone / WhatsApp Number',
-              hintText: 'e.g. 9876543210',
-              prefixIcon: const Icon(Icons.phone, color: AppColors.primary),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Address Field
-          TextField(
-            controller: _addressController,
-            maxLines: 2,
-            decoration: InputDecoration(
-              labelText: 'Delivery Address / Colony / Landmark',
-              hintText: 'e.g. Main Market, Near Jama Masjid',
-              prefixIcon: const Icon(Icons.home_work_outlined, color: AppColors.primary),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              children: [
+                _buildBenefitRow(Icons.check_circle_outline, 'No Guest Access • Authentic Customer Profiles'),
+                const SizedBox(height: 12),
+                _buildBenefitRow(Icons.notifications_active_outlined, 'Real-time Restock & Price Drop Alerts'),
+                const SizedBox(height: 12),
+                _buildBenefitRow(Icons.offline_bolt_outlined, 'Offline-First Speed with 0ms Load Times'),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-}
 
+  Widget _buildBenefitRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: AppColors.success, size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.textPrimary),
+          ),
+        ),
+      ],
+    );
+  }
+}
