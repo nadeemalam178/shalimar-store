@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +8,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_extensions.dart';
 import '../../models/product.dart';
 import '../../providers/catalogue_provider.dart';
+import '../../services/image_upload_service.dart';
 
 class AddEditProductDialog extends StatefulWidget {
   final Product? productToEdit;
@@ -111,15 +114,60 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
 
     final imagePath = _imageCtrl.text.trim();
 
+    // ── Upload image to Supabase Storage if it's a local file ──
+    if (_localImagePath != null && !imagePath.startsWith('http')) {
+      _uploadImageAndSave(productId: null, localPath: _localImagePath!);
+    } else {
+      _saveProduct(productId: null, imageUrl: imagePath);
+    }
+
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(widget.productToEdit == null ? 'Product added!' : 'Product updated!'),
+        backgroundColor: AppColors.success,
+      ),
+    );
+  }
+
+  /// Uploads local image to Supabase Storage, then saves product with public URL
+  void _uploadImageAndSave({required String? productId, required String localPath}) async {
+    try {
+      final bytes = await File(localPath).readAsBytes();
+      final fileName = localPath.split('/').last;
+      final uploadId = productId ?? const Uuid().v4();
+
+      final publicUrl = await ImageUploadService.uploadProductImage(
+        productId: uploadId,
+        bytes: bytes,
+        fileName: fileName,
+      );
+
+      if (!mounted) return;
+      _saveProduct(productId: uploadId, imageUrl: publicUrl ?? localPath);
+    } catch (e) {
+      debugPrint('⚠️ [AddEditProduct] Image upload failed: $e');
+      if (!mounted) return;
+      _saveProduct(productId: productId, imageUrl: localPath);
+    }
+  }
+
+  /// Saves the product to catalogue + cloud
+  void _saveProduct({required String? productId, required String imageUrl}) {
+    final price = double.tryParse(_priceCtrl.text) ?? 0.0;
+    final mrp = double.tryParse(_mrpCtrl.text) ?? price;
+    final catalogue = context.read<CatalogueProvider>();
+
     if (widget.productToEdit == null) {
       // Add new
       catalogue.addProduct(
+        id: productId,
         name: _nameCtrl.text.trim(),
         category: _category,
         price: price,
         mrp: mrp,
         unit: _unitCtrl.text.trim(),
-        imageUrl: imagePath,
+        imageUrl: imageUrl,
         inStock: _inStock,
         description: _descCtrl.text.trim(),
       );
@@ -132,20 +180,12 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           price: price,
           mrp: mrp,
           unit: _unitCtrl.text.trim(),
-          imageUrl: imagePath,
+          imageUrl: imageUrl,
           inStock: _inStock,
           description: _descCtrl.text.trim(),
         ),
       );
     }
-
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(widget.productToEdit == null ? 'Product added!' : 'Product updated!'),
-        backgroundColor: AppColors.success,
-      ),
-    );
   }
 
   Widget _buildImagePreview() {
