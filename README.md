@@ -2,7 +2,7 @@
   <img src="assets/images/logo.png" width="140" alt="Shalimar Store Logo" />
 </p>
 
-<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.2.5)</h1>
+<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.3.0)</h1>
 
 <p align="center">
   <b>Official Dual-Mode Kirana & General Store Mobile Application</b><br>
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v3.2.5-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-v3.3.0-crimson" alt="Version" />
   <img src="https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
   <img src="https://img.shields.io/badge/Auth-Email%20%7C%20Google%20Sign--In%20Active-blue" alt="Authentication" />
   <img src="https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
@@ -36,7 +36,7 @@ Established in **1988** by Mohammad Jamil, **Shalimar General Store** has been a
 
 ---
 
-## 🚀 What's New in v3.2.5 (Owner Direct Sign-In, Cloud GitHub CI/CD & App Tour)
+## 🚀 What's New in v3.3.0 (Owner Direct Sign-In, Cloud GitHub CI/CD & App Tour)
 
 - 🔑 **Dual-Path Owner Sign-In**:
   - The store owner can now sign in using **Admin ID: `Shalimar@1988`** and **Password: `Shal1mar@1988#`** (or `nadeemalam178@gmail.com`).
@@ -177,9 +177,9 @@ Optimized **Split-per-ABI APKs** (~15–20 MB) signed with APK Signature Scheme 
 
 | Download | Architecture | Recommended For |
 | :--- | :--- | :--- |
-| 📲 **[Download app-arm64-v8a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.2.5/app-arm64-v8a-release.apk)** | `arm64-v8a` | Modern Android phones (2018+) — **Recommended** |
-| 📲 **[Download app-armeabi-v7a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.2.5/app-armeabi-v7a-release.apk)** | `armeabi-v7a` | Older 32-bit Android phones |
-| 📲 **[Download app-x86_64-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.2.5/app-x86_64-release.apk)** | `x86_64` | Android Emulators & Chromebooks |
+| 📲 **[Download app-arm64-v8a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.3.0/app-arm64-v8a-release.apk)** | `arm64-v8a` | Modern Android phones (2018+) — **Recommended** |
+| 📲 **[Download app-armeabi-v7a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.3.0/app-armeabi-v7a-release.apk)** | `armeabi-v7a` | Older 32-bit Android phones |
+| 📲 **[Download app-x86_64-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.3.0/app-x86_64-release.apk)** | `x86_64` | Android Emulators & Chromebooks |
 
 ---
 
