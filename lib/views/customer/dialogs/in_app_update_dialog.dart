@@ -7,8 +7,13 @@ import '../../../services/update_service.dart';
 
 class InAppUpdateDialog extends StatefulWidget {
   final ReleaseUpdateInfo updateInfo;
+  final bool autoStart;
 
-  const InAppUpdateDialog({super.key, required this.updateInfo});
+  const InAppUpdateDialog({
+    super.key,
+    required this.updateInfo,
+    this.autoStart = false,
+  });
 
   @override
   State<InAppUpdateDialog> createState() => _InAppUpdateDialogState();
@@ -20,12 +25,14 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
   int _totalBytes = 0;
   String? _downloadedFilePath;
   String? _errorMessage;
-  bool _isDownloading = true;
+  bool _isDownloading = false;
 
   @override
   void initState() {
     super.initState();
-    _startDownload();
+    if (widget.autoStart) {
+      _startDownload();
+    }
   }
 
   void _startDownload() {
@@ -87,8 +94,9 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Container(
+        constraints: const BoxConstraints(maxWidth: 420),
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
           color: context.surfaceColor,
@@ -114,7 +122,7 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -128,17 +136,43 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Updating Shalimar Store',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: context.textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'Update Available',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: context.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              widget.updateInfo.latestVersion,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Version ${widget.updateInfo.latestVersion}',
+                        'Shalimar Store Official Release',
                         style: TextStyle(
                           fontSize: 12,
                           color: context.textSecondary,
@@ -150,7 +184,7 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
                 if (!_isDownloading)
                   IconButton(
                     icon: Icon(
-                      Icons.close,
+                      Icons.close_rounded,
                       size: 20,
                       color: context.textSecondary,
                     ),
@@ -159,7 +193,45 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
+
+            // Device Architecture Verification Badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: context.isDark
+                    ? const Color(0xFF1E2822)
+                    : const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.success.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.verified_rounded,
+                    color: AppColors.success,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Target ABI: ${widget.updateInfo.architecture} (Verified for this phone)',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: context.isDark
+                            ? const Color(0xFFA5D6A7)
+                            : const Color(0xFF1B5E20),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 14),
 
             // Content States
             if (_errorMessage != null) ...[
@@ -246,8 +318,8 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
                   label: const Text('Re-launch Package Installer'),
                 ),
               ),
-            ] else ...[
-              // Progress Bar
+            ] else if (_isDownloading) ...[
+              // Active Downloading Progress View
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
@@ -294,9 +366,101 @@ class _InAppUpdateDialogState extends State<InAppUpdateDialog> {
               const SizedBox(height: 16),
               Center(
                 child: Text(
-                  'Downloading update directly inside the app...',
+                  'Downloading update directly... Installer will open automatically.',
                   style: TextStyle(fontSize: 11, color: context.textSecondary),
+                  textAlign: TextAlign.center,
                 ),
+              ),
+            ] else ...[
+              // Initial Changelog & Details View (User reads what is new first!)
+              Text(
+                widget.updateInfo.title.isNotEmpty
+                    ? widget.updateInfo.title
+                    : 'What\'s New in this Update:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: context.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Scrollable Changelog Box
+              Container(
+                constraints: const BoxConstraints(maxHeight: 190),
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.isDark
+                      ? const Color(0xFF1E1E1E)
+                      : AppColors.surfaceVariant.withAlpha(100),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: context.borderSubtle),
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Text(
+                    widget.updateInfo.changelog.isNotEmpty
+                        ? widget.updateInfo.changelog
+                        : '• Performance improvements and general bug fixes.\n• Seamless in-app update installation.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.45,
+                      color: context.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // Action Buttons: "Later" vs "Download & Install Update"
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(color: context.borderSubtle),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Later',
+                        style: TextStyle(
+                          color: context.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 3,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: _startDownload,
+                      icon: const Icon(Icons.download_rounded, size: 18),
+                      label: const Text(
+                        'Update Now',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ],

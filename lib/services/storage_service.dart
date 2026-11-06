@@ -156,5 +156,16 @@ class StorageService {
       await saveSubscribedRestocks(list);
     }
   }
+
+  // --- In-App OTA Update Prompt Tracking ---
+  static const String keyLastPromptedUpdate = 'last_prompted_update_version';
+
+  static String getLastPromptedUpdateVersion() {
+    return _prefs?.getString(keyLastPromptedUpdate) ?? '';
+  }
+
+  static Future<void> setLastPromptedUpdateVersion(String version) async {
+    await _prefs?.setString(keyLastPromptedUpdate, version);
+  }
 }
 

@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/theme_extensions.dart';
 import '../../../providers/catalogue_provider.dart';
+import '../../../services/storage_service.dart';
 import '../../../services/update_service.dart';
 import '../../../widgets/product_card.dart';
 import '../dialogs/in_app_update_dialog.dart';
@@ -20,7 +21,6 @@ class HomeCatalogTab extends StatefulWidget {
 class _HomeCatalogTabState extends State<HomeCatalogTab> {
   final _searchController = TextEditingController();
   ReleaseUpdateInfo? _updateInfo;
-  bool _updateDismissed = false;
 
   @override
   void initState() {
@@ -32,6 +32,27 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
     final info = await UpdateService.checkForUpdate();
     if (mounted && info.hasUpdate) {
       setState(() => _updateInfo = info);
+      _showMiddleUpdateDialogFirstTime(info);
+    }
+  }
+
+  void _showMiddleUpdateDialogFirstTime(ReleaseUpdateInfo info) {
+    // Only auto-open the middle changelog dialog once per new version
+    final lastPrompted = StorageService.getLastPromptedUpdateVersion();
+    if (lastPrompted != info.latestVersion) {
+      StorageService.setLastPromptedUpdateVersion(info.latestVersion);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: true,
+            builder: (_) => InAppUpdateDialog(
+              updateInfo: info,
+              autoStart: false,
+            ),
+          );
+        }
+      });
     }
   }
 
@@ -108,9 +129,9 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
           ),
         ),
 
-        // Live OTA Update Banner (Backend-Managed from GitHub Releases)
-        if (_updateInfo != null && _updateInfo!.hasUpdate && !_updateDismissed)
-          _buildOtaUpdateBanner(_updateInfo!),
+        // Live Persistent OTA Update Banner (Stays pinned on top whenever an update is available)
+        if (_updateInfo != null && _updateInfo!.hasUpdate)
+          _buildPersistentOtaUpdateBanner(_updateInfo!),
 
         // Scrollable Catalog Body
         Expanded(
@@ -426,96 +447,150 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
     );
   }
 
-  Widget _buildOtaUpdateBanner(ReleaseUpdateInfo info) {
+  Widget _buildPersistentOtaUpdateBanner(ReleaseUpdateInfo info) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
+          colors: [Color(0xFF0F3E1B), Color(0xFF1B5E20), Color(0xFF2E7D32)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF4CAF50).withValues(alpha: 0.45),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: context.isDark ? 0.35 : 0.12),
+            blurRadius: 10,
             offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.system_update_rounded,
-            color: Colors.white,
-            size: 24,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            showDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (_) => InAppUpdateDialog(
+                updateInfo: info,
+                autoStart: false,
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Text(
-                      'Update Available: ${info.latestVersion}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    InkWell(
-                      onTap: () => setState(() => _updateDismissed = true),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white70,
-                        size: 16,
-                      ),
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.system_update_rounded,
+                    color: Color(0xFFFFD54F),
+                    size: 20,
+                  ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  info.title,
-                  style: const TextStyle(color: Colors.white70, fontSize: 11),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                InkWell(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (_) => InAppUpdateDialog(updateInfo: info),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      '⚡ Download & Update Now',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF5D3E00),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFD54F),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'UPDATE',
+                              style: TextStyle(
+                                color: Color(0xFF332000),
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'New Version ${info.latestVersion}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Tap to view changelog & update (${info.architecture})',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'View',
+                        style: TextStyle(
+                          color: Color(0xFF1B5E20),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(width: 2),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Color(0xFF1B5E20),
+                        size: 10,
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

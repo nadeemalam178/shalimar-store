@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,6 +11,7 @@ class ReleaseUpdateInfo {
   final String title;
   final String changelog;
   final String downloadUrl;
+  final String architecture;
 
   const ReleaseUpdateInfo({
     required this.hasUpdate,
@@ -17,12 +19,93 @@ class ReleaseUpdateInfo {
     this.title = '',
     this.changelog = '',
     this.downloadUrl = '',
+    this.architecture = 'arm64-v8a',
   });
 }
 
 class UpdateService {
   static const String _githubRepo = 'nadeemalam178/Shalimar-Store';
   static const String _currentVersionTag = AppConstants.appVersion;
+
+  /// Resolves the exact CPU architecture name of the active device
+  static String getDeviceArchitectureName({Abi? targetAbi}) {
+    Abi? abi = targetAbi;
+    if (abi == null) {
+      try {
+        abi = Abi.current();
+      } catch (_) {
+        abi = null;
+      }
+    }
+    if (abi == Abi.androidArm64) return 'arm64-v8a';
+    if (abi == Abi.androidArm) return 'armeabi-v7a';
+    if (abi == Abi.androidX64) return 'x86_64';
+    if (abi == Abi.androidIA32) return 'x86';
+    return 'arm64-v8a';
+  }
+
+  /// Selects the device-architecture-matching APK URL from release assets
+  static String selectBestApkUrl(
+    List<dynamic> assets,
+    String defaultUrl, {
+    Abi? targetAbi,
+  }) {
+    String? arm64Url;
+    String? armV7Url;
+    String? x8664Url;
+    String? universalUrl;
+
+    for (final asset in assets) {
+      if (asset is! Map<String, dynamic>) continue;
+      final name = (asset['name'] as String? ?? '').toLowerCase();
+      final browserUrl = asset['browser_download_url'] as String? ?? '';
+      if (!name.endsWith('.apk') || browserUrl.isEmpty) continue;
+
+      if (name.contains('arm64') || name.contains('v8a')) {
+        arm64Url = browserUrl;
+      } else if (name.contains('armeabi') || name.contains('v7a') || name.contains('armv7')) {
+        armV7Url = browserUrl;
+      } else if (name.contains('x86_64') || name.contains('x86-64')) {
+        x8664Url = browserUrl;
+      } else if (!name.contains('x86')) {
+        // Universal APK (e.g., app-release.apk)
+        universalUrl = browserUrl;
+      }
+    }
+
+    Abi? currentAbi = targetAbi;
+    if (currentAbi == null) {
+      try {
+        currentAbi = Abi.current();
+      } catch (_) {
+        currentAbi = null;
+      }
+    }
+
+    // 1. Modern Android phones (arm64-v8a)
+    if (currentAbi == Abi.androidArm64) {
+      return arm64Url ?? armV7Url ?? universalUrl ?? defaultUrl;
+    }
+
+    // 2. 32-bit ARM phones (armeabi-v7a)
+    if (currentAbi == Abi.androidArm) {
+      return armV7Url ?? universalUrl ?? defaultUrl;
+    }
+
+    // 3. Android x86_64 (PC Emulators)
+    if (currentAbi == Abi.androidX64) {
+      return x8664Url ?? universalUrl ?? defaultUrl;
+    }
+
+    // 4. Android x86 32-bit Emulators
+    if (currentAbi == Abi.androidIA32) {
+      return universalUrl ?? defaultUrl;
+    }
+
+    // 5. Default fallback for physical Android phones (ARM is overwhelmingly standard)
+    // CRITICAL: NEVER serve x86_64 to physical ARM hardware!
+    return arm64Url ?? armV7Url ?? universalUrl ?? defaultUrl;
+  }
 
   /// Queries the GitHub Releases API to check if a new version has been released
   static Future<ReleaseUpdateInfo> checkForUpdate() async {
@@ -48,19 +131,10 @@ class UpdateService {
       final body = data['body'] as String? ?? 'Performance improvements and bug fixes.';
       final htmlUrl = data['html_url'] as String? ?? 'https://github.com/$_githubRepo/releases';
 
-      // Find direct APK download link in release assets if available
-      String downloadUrl = htmlUrl;
+      // Find direct matching APK download link in release assets
       final assets = data['assets'] as List<dynamic>? ?? [];
-      for (final asset in assets) {
-        final name = asset['name'] as String? ?? '';
-        final browserUrl = asset['browser_download_url'] as String? ?? '';
-        if (name.endsWith('.apk') && browserUrl.isNotEmpty) {
-          // Prefer arm64 or release apk
-          if (name.contains('arm64') || name.contains('release') || downloadUrl == htmlUrl) {
-            downloadUrl = browserUrl;
-          }
-        }
-      }
+      final downloadUrl = selectBestApkUrl(assets, htmlUrl);
+      final archName = getDeviceArchitectureName();
 
       final hasUpdate = isVersionGreater(tagName, _currentVersionTag);
 
@@ -70,6 +144,7 @@ class UpdateService {
         title: title,
         changelog: body,
         downloadUrl: downloadUrl,
+        architecture: archName,
       );
     } catch (_) {
       // Offline or network error - fail silently

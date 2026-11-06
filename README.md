@@ -2,7 +2,7 @@
   <img src="assets/images/logo.png" width="140" alt="Shalimar Store Logo" />
 </p>
 
-<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.2.0)</h1>
+<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.2.1)</h1>
 
 <p align="center">
   <b>Official Dual-Mode Kirana & General Store Mobile Application</b><br>
@@ -10,14 +10,14 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v3.2.0-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-v3.2.1-crimson" alt="Version" />
   <img src="https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
   <img src="https://img.shields.io/badge/Auth-Email%20%7C%20Google%20Sign--In-blue" alt="Authentication" />
   <img src="https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Dart-3.13+-0175C2?logo=dart&logoColor=white" alt="Dart" />
   <img src="https://img.shields.io/badge/Typography-Plus%20Jakarta%20Sans-indigo" alt="Plus Jakarta Sans" />
   <img src="https://img.shields.io/badge/Theme-AMOLED%20Dark%20%26%20Light-darkgreen" alt="Dynamic AMOLED Theme" />
-  <img src="https://img.shields.io/badge/OTA-In--App%20Direct%20Updates-brightgreen" alt="OTA Updates" />
+  <img src="https://img.shields.io/badge/OTA-Architecture--Aware%20OTA-brightgreen" alt="OTA Updates" />
   <img src="https://img.shields.io/badge/Android-Split%20ABI%20(v1--v4%20Signed)-success" alt="Android" />
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
 </p>
@@ -36,7 +36,24 @@ Established in **1988** by Mohammad Jamil, **Shalimar General Store** has been a
 
 ---
 
-## 🚀 What's New in v3.2.0 (Compulsory Customer Registration & Google Auth)
+## 🚀 What's New in v3.2.1 (Architecture-Aware Direct OTA & Persistent Update Banner)
+
+- ⚡ **Device-Architecture-Aware OTA (Zero Installation Errors):**
+  - Resolves CPU architecture mismatch on physical Android smartphones (`arm64-v8a` / `armeabi-v7a`).
+  - Runtime ABI inspection via `dart:ffi Abi.current()`.
+  - Always downloads the exact matching APK (`app-arm64-v8a-release.apk` on 64-bit ARM hardware, `app-armeabi-v7a-release.apk` on 32-bit ARM hardware), preventing `x86_64` emulator builds from being downloaded on phones.
+  - Verified architecture badge displayed inside the dialog: `Target ABI: arm64-v8a (Verified for this phone)`.
+- 📖 **First-Time Center Popup with Full Changelog:**
+  - When an update is detected, the dialog automatically opens in the middle of the screen.
+  - Customers can read the complete changelog and release notes before downloading.
+  - Clean "Later" and "Update Now" action buttons.
+- 📌 **Persistent Top Update Banner:**
+  - The update banner stays persistently pinned at the top of the catalog until updated.
+  - Dismissing the middle changelog leaves the top banner active so customers can tap to view the changelog and install the update at any time.
+
+---
+
+## 🔐 What's New in v3.2.0 (Compulsory Customer Registration & Google Auth)
 
 - 🔐 **Compulsory Customer Authentication (Zero Guest Access):**
   - Unauthenticated access to the catalog is blocked. Customers must register or sign in to browse and order.

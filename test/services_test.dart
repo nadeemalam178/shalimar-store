@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shalimar_store/models/product.dart';
@@ -33,6 +34,62 @@ void main() {
       expect(UpdateService.isVersionGreater('v4.0.0', 'v3.0.0'), isTrue);
       expect(UpdateService.isVersionGreater('v3.0.0', 'v3.0.0'), isFalse);
       expect(UpdateService.isVersionGreater('v2.9.0', 'v3.0.0'), isFalse);
+    });
+
+    test('Selects exact architecture-matching APK and avoids wrong architecture', () {
+      final mockAssets = [
+        {
+          'name': 'app-arm64-v8a-release.apk',
+          'browser_download_url': 'https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.2.1/app-arm64-v8a-release.apk',
+        },
+        {
+          'name': 'app-armeabi-v7a-release.apk',
+          'browser_download_url': 'https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.2.1/app-armeabi-v7a-release.apk',
+        },
+        {
+          'name': 'app-x86_64-release.apk',
+          'browser_download_url': 'https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.2.1/app-x86_64-release.apk',
+        },
+      ];
+      const fallbackUrl = 'https://github.com/nadeemalam178/Shalimar-Store/releases';
+
+      // 1. Android ARM64 must always get arm64-v8a APK, never x86_64
+      final arm64Choice = UpdateService.selectBestApkUrl(
+        mockAssets,
+        fallbackUrl,
+        targetAbi: Abi.androidArm64,
+      );
+      expect(arm64Choice, contains('app-arm64-v8a-release.apk'));
+
+      // 2. Android 32-bit ARM must get armeabi-v7a APK
+      final armV7Choice = UpdateService.selectBestApkUrl(
+        mockAssets,
+        fallbackUrl,
+        targetAbi: Abi.androidArm,
+      );
+      expect(armV7Choice, contains('app-armeabi-v7a-release.apk'));
+
+      // 3. Android x86_64 emulator must get x86_64 APK
+      final x86Choice = UpdateService.selectBestApkUrl(
+        mockAssets,
+        fallbackUrl,
+        targetAbi: Abi.androidX64,
+      );
+      expect(x86Choice, contains('app-x86_64-release.apk'));
+
+      // 4. Default fallback on phone must prioritize ARM64 over x86
+      final defaultChoice = UpdateService.selectBestApkUrl(
+        mockAssets,
+        fallbackUrl,
+      );
+      expect(defaultChoice, contains('app-arm64-v8a-release.apk'));
+      expect(defaultChoice, isNot(contains('x86_64')));
+    });
+
+    test('Tracks last prompted update version in StorageService', () async {
+      expect(StorageService.getLastPromptedUpdateVersion(), isEmpty);
+      await StorageService.setLastPromptedUpdateVersion('v3.2.1');
+      expect(StorageService.getLastPromptedUpdateVersion(), equals('v3.2.1'));
     });
   });
 
