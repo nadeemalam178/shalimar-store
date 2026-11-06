@@ -177,9 +177,9 @@ Optimized **Split-per-ABI APKs** (~15–20 MB) signed with APK Signature Scheme 
 
 | Download | Architecture | Recommended For |
 | :--- | :--- | :--- |
-| 📲 **[Download app-arm64-v8a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.0.0/app-arm64-v8a-release.apk)** | `arm64-v8a` | Modern Android phones (2018+) — **Recommended** |
-| 📲 **[Download app-armeabi-v7a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.0.0/app-armeabi-v7a-release.apk)** | `armeabi-v7a` | Older 32-bit Android phones |
-| 📲 **[Download app-x86_64-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.0.0/app-x86_64-release.apk)** | `x86_64` | Android Emulators & Chromebooks |
+| 📲 **[Download app-arm64-v8a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.2.5/app-arm64-v8a-release.apk)** | `arm64-v8a` | Modern Android phones (2018+) — **Recommended** |
+| 📲 **[Download app-armeabi-v7a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.2.5/app-armeabi-v7a-release.apk)** | `armeabi-v7a` | Older 32-bit Android phones |
+| 📲 **[Download app-x86_64-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.2.5/app-x86_64-release.apk)** | `x86_64` | Android Emulators & Chromebooks |
 
 ---
 

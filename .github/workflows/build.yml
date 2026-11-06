@@ -63,8 +63,34 @@ jobs:
           path: build/app/outputs/flutter-apk/*.apk
 
       - name: Publish Release Asset to GitHub Releases
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name != 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.ref_name }} build/app/outputs/flutter-apk/app-arm64-v8a-release.apk --clobber || gh release create ${{ github.ref_name }} build/app/outputs/flutter-apk/app-arm64-v8a-release.apk --title "Shalimar Store ${{ github.ref_name }}" --generate-notes
+          # Determine target tag name from git ref or pubspec.yaml
+          TAG="${{ github.ref_name }}"
+          if [ "${{ github.ref_type }}" != "tag" ] || [ -z "$TAG" ]; then
+            VERSION=$(grep '^version:' pubspec.yaml | head -n 1 | awk '{print $2}' | cut -d'+' -f1 | tr -d '\r\n ')
+            TAG="v$VERSION"
+          fi
+          echo "Target Release Tag: $TAG"
+
+          # Collect all split APKs produced by flutter build
+          APK_FILES=(build/app/outputs/flutter-apk/*.apk)
+          echo "Found APK assets to upload: ${APK_FILES[*]}"
+
+          # Check if the release already exists on GitHub
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG exists. Uploading split APKs and updating release notes..."
+            gh release upload "$TAG" "${APK_FILES[@]}" --clobber
+            if [ -f release_notes.md ]; then
+              gh release edit "$TAG" --notes-file release_notes.md --title "Shalimar Store $TAG"
+            fi
+          else
+            echo "Release $TAG does not exist. Creating new release with APK assets..."
+            if [ -f release_notes.md ]; then
+              gh release create "$TAG" "${APK_FILES[@]}" --title "Shalimar Store $TAG" --notes-file release_notes.md
+            else
+              gh release create "$TAG" "${APK_FILES[@]}" --title "Shalimar Store $TAG" --generate-notes
+            fi
+          fi
