@@ -89,4 +89,25 @@ class AdminAuthService {
       debugPrint('⚠️ [AdminAuthService] Firebase owner session skipped: $e');
     }
   }
+
+  /// Changes the admin password
+  static Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final expectedHash = getStoredPasswordHash();
+    if (_hashPassword(currentPassword) != expectedHash) {
+      return false;
+    }
+    final newHash = _hashPassword(newPassword);
+    await _prefs?.setString(AppConstants.keyAdminPasswordHash, newHash);
+    return true;
+  }
+
+  /// Updates admin login ID
+  static Future<void> updateAdminId(String newId) async {
+    if (newId.trim().isNotEmpty) {
+      await _prefs?.setString(AppConstants.keyAdminId, newId.trim());
+    }
+  }
 }

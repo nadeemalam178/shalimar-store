@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
 import '../models/cart_item.dart';
+import '../models/order_model.dart';
 import '../models/product.dart';
+import '../models/user_profile.dart';
 
 class StorageService {
   static SharedPreferences? _prefs;
@@ -37,20 +39,14 @@ class StorageService {
   }
 
   // ── User Profile ──
-  static Map<String, dynamic> getUserProfile() {
-    return _prefs?.getString(AppConstants.keyUsername) == null
-        ? {}
-        : {
-            'username': _prefs?.getString(AppConstants.keyUsername) ?? '',
-            'phone': _prefs?.getString(AppConstants.keyStorePhone) ?? '',
-            'email': _prefs?.getString(AppConstants.keyStoreUpi) ?? '',
-          };
+  static UserProfile getUserProfile() {
+    final raw = _prefs?.getString(AppConstants.keyUsername);
+    if (raw == null) return const UserProfile(username: '');
+    return UserProfile.fromJson(jsonDecode(raw) as Map<String, dynamic>);
   }
 
-  static Future<void> saveUserProfile(Map<String, dynamic> profile) async {
-    await _prefs?.setString(AppConstants.keyUsername, profile['username'] ?? '');
-    await _prefs?.setString(AppConstants.keyStorePhone, profile['phone'] ?? '');
-    await _prefs?.setString(AppConstants.keyStoreUpi, profile['email'] ?? '');
+  static Future<void> saveUserProfile(UserProfile profile) async {
+    await _prefs?.setString(AppConstants.keyUsername, jsonEncode(profile.toJson()));
   }
 
   // ── Favorites ──
@@ -63,16 +59,16 @@ class StorageService {
   }
 
   // ── Past Orders ──
-  static List<Map<String, dynamic>> loadOrders() {
+  static List<OrderModel> loadOrders() {
     return _prefs?.getStringList(AppConstants.keyPastOrders)
-        ?.map((e) => jsonDecode(e) as Map<String, dynamic>)
+        ?.map((e) => OrderModel.fromJson(jsonDecode(e) as Map<String, dynamic>))
         .toList() ?? [];
   }
 
-  static Future<void> saveOrders(List<Map<String, dynamic>> orders) async {
+  static Future<void> saveOrders(List<OrderModel> orders) async {
     await _prefs?.setStringList(
       AppConstants.keyPastOrders,
-      orders.map((e) => jsonEncode(e)).toList(),
+      orders.map((e) => jsonEncode(e.toJson())).toList(),
     );
   }
 
