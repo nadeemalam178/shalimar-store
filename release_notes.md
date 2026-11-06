@@ -1,40 +1,64 @@
-# 🛒 Shalimar Store v3.3.0 — Direct Owner Sign-In, Cloud GitHub CI/CD & App Tour
+# 🛒 Shalimar Store v3.4.0 Release Notes
 
 **Shalimar Store (Est. 1988) — Official Mobile Application**  
 *Serving Trust, Quality & Purity on Ashok Raj Path, Alamganj, Patna — 800007, Bihar*
 
 ---
 
-### 🚀 What's New in Version 3.3.0:
+## 🚀 What's New in Version 3.4.0
 
-#### 🔑 Dual-Path Store Owner Authentication
-- **Dedicated Store Owner Modal:** Access the owner authentication modal directly with 1 tap from both the customer login screen and the store catalog header.
-- **Support for Non-Email Admin ID:** The store owner can sign in using **Admin ID: `Shalimar@1988`** with **Password: `Shal1mar@1988#`**, or via verified owner email (`nadeemalam178@gmail.com`).
-- **Smart Form Identifier Routing:** Entering owner credentials directly into the main customer sign-in form now automatically routes to administrative authentication without demanding an `@` email domain format.
+### 🔄 Real-Time Cloud Sync
+When the store owner adds, edits, or toggles stock in the admin panel, **every connected customer sees the change within one second**. No separate update required.
 
-#### 📖 On-Demand App Tour & Onboarding
-- **Re-Accessible Welcome Tour:** Customers and store managers can re-visit the full 4-slide onboarding presentation anytime by tapping **"App Tour (Intro)"** on the login screen.
-- Highlights store heritage (serving Patna since 1988), catalog browsing, cart ordering, and instant WhatsApp dispatch.
+- Powered by Firebase Firestore (`products` collection).
+- Offline-first: customers browse last known catalogue when network drops.
+- Deletions propagate — removed products vanish from all phones.
 
-#### 🤖 100% Automated GitHub Actions Cloud CI/CD
-- **Zero Local Build Dependencies:** Release APKs are compiled, tested, signed, and published 100% via GitHub Actions on `ubuntu-latest`.
-- **Sanitized Keystore Pipeline:** Cleans base64 decoding whitespace and outputs standard properties via POSIX `printf` for guaranteed signing without Gradle parse errors.
-- **Full Split-per-ABI Distribution:** Every release publishes dedicated binaries for modern 64-bit phones, older 32-bit devices, and x86_64 emulators.
+### 🔐 Persistent Admin Login
+The owner logs in **once** and stays logged in across app restarts for up to 7 days.
+
+- Credentials: `Shalimar@1988` + `Shal1mar@1988#` (or owner email).
+- Session survives OS updates, phone reboots.
+- Automatic Firebase Auth ensures Firestore rules grant write access.
+
+### 🚫 Single Active Admin Session
+Only **one device** can be logged in as admin at a time.
+
+- If the owner opens admin on Phone B, Phone A is automatically logged out.
+- Takeover detection via `admin_sessions/active` Firestore document.
+- Prevents accidental concurrent edits.
+
+### 🖼️ Supabase Storage Images
+Product photos are uploaded to Supabase Storage (1 GB free tier).
+
+- Photos live in bucket `product-images/{productId}/`
+- Public download URLs stored in product document.
+- All customers see the exact same image the owner captured.
+
+### 📦 Clean Production Launch
+No bundled demo products — the store starts completely empty.
+
+- Owner builds the real inventory from day one.
+- Customer empty state: "Store is being stocked… check back soon."
 
 ---
 
-### 📦 Split-per-ABI APK Downloads:
+## 📦 Installation
 
 | Download | Architecture | Recommended For |
 | :--- | :--- | :--- |
-| 📲 **[app-arm64-v8a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.3.0/app-arm64-v8a-release.apk)** | `arm64-v8a` | Modern Android phones (2018+) — **Recommended** |
-| 📲 **[app-armeabi-v7a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.3.0/app-armeabi-v7a-release.apk)** | `armeabi-v7a` | Older 32-bit Android phones |
-| 📲 **[app-x86_64-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/download/v3.3.0/app-x86_64-release.apk)** | `x86_64` | Android Emulators & Chromebooks |
+| 📲 **app-arm64-v8a-release.apk** | `arm64-v8a` | Modern Android phones (2018+) — **Recommended** |
+| 📲 **app-armeabi-v7a-release.apk** | `armeabi-v7a` | Older 32-bit Android phones |
+| 📲 **app-x86_64-release.apk** | `x86_64` | Android Emulators & Chromebooks |
 
 ---
 
-### ⚡ Previous Highlights (v3.2.0 – v3.2.5):
-- **Live In-App OTA Update Detection:** Automatically detects higher releases and prompts user with real-time byte download progress and direct Android package installer invocation.
-- **Compulsory Customer Authentication:** Firebase Email/Password & Google Sign-In with customer records synchronized to Cloud Firestore (`users/{uid}`).
-- **True AMOLED Theme:** Deep `#121212` backgrounds across splash, login, catalog, cart, and admin screens with zero white flashes.
-- **Real-Time Inventory Sync:** Live Firebase cloud synchronization for stock counts, item availability, and restock notifications.
+## 🛠️ Developer Notes
+
+- Build triggered: push to `main` branch
+- CI: GitHub Actions (ubuntu-latest, Flutter 3.x)
+- Release created: `v3.4.0` with above release notes
+
+---
+
+*Built with ❤️ for Md. Jamil General Store (Est. 1988) — Patna, Bihar*

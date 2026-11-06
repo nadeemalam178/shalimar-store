@@ -21,14 +21,10 @@ class CatalogueProvider with ChangeNotifier {
   List<String> get categories {
     final set = <String>{'All'};
     for (final c in _customCategories) {
-      if (c.trim().isNotEmpty) {
-        set.add(c.trim());
-      }
+      if (c.trim().isNotEmpty) set.add(c.trim());
     }
     for (final p in _products) {
-      if (p.category.trim().isNotEmpty) {
-        set.add(p.category.trim());
-      }
+      if (p.category.trim().isNotEmpty) set.add(p.category.trim());
     }
     return set.toList();
   }
@@ -52,7 +48,6 @@ class CatalogueProvider with ChangeNotifier {
     _isLoading = false;
     notifyListeners();
 
-    // Attach real-time cloud stream listener
     CloudSyncService.startLiveCatalogueListener(
       onCatalogueUpdated: (cloudProducts) {
         _syncFromCloud(cloudProducts);
@@ -61,9 +56,8 @@ class CatalogueProvider with ChangeNotifier {
   }
 
   void _syncFromCloud(List<Product> cloudProducts) {
-    if (cloudProducts.isEmpty) return;
     _products = cloudProducts;
-    StorageService.saveProducts(_products);
+    unawaited(StorageService.saveProducts(_products));
     notifyListeners();
   }
 
@@ -95,6 +89,7 @@ class CatalogueProvider with ChangeNotifier {
 
   // --- Admin Catalogue Mutations ---
   Future<void> addProduct({
+    String? id,
     required String name,
     required String category,
     required double price,
@@ -105,7 +100,7 @@ class CatalogueProvider with ChangeNotifier {
     String description = '',
   }) async {
     final newProduct = Product(
-      id: const Uuid().v4(),
+      id: id ?? const Uuid().v4(),
       name: name.trim(),
       category: category.trim().isEmpty ? 'General' : category.trim(),
       price: price,
@@ -120,6 +115,14 @@ class CatalogueProvider with ChangeNotifier {
     await StorageService.saveProducts(_products);
     notifyListeners();
     unawaited(CloudSyncService.syncProductToCloud(newProduct));
+  }
+
+  Future<void> syncProductToCloud(Product product) async {
+    unawaited(CloudSyncService.syncProductToCloud(product));
+  }
+
+  Future<void> syncAllToCloud() async {
+    await CloudSyncService.pushFullCatalogueToCloud(_products);
   }
 
   Future<void> updateProduct(Product updated) async {
@@ -142,7 +145,6 @@ class CatalogueProvider with ChangeNotifier {
       await StorageService.saveProducts(_products);
       notifyListeners();
 
-      // If toggled back to "In Stock", trigger a restock notification
       if (willBeInStock) {
         NotificationService.showRestockNotification(updated);
       }
@@ -164,11 +166,6 @@ class CatalogueProvider with ChangeNotifier {
     _products = await StorageService.loadStandardKiranaCatalogue();
     _isLoading = false;
     notifyListeners();
-    unawaited(CloudSyncService.pushFullCatalogueToCloud(_products));
-  }
-
-  Future<int> syncAllToCloud() async {
-    return await CloudSyncService.pushFullCatalogueToCloud(_products);
   }
 
   @override
@@ -177,4 +174,3 @@ class CatalogueProvider with ChangeNotifier {
     super.dispose();
   }
 }
-

@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
 
@@ -17,64 +20,66 @@ class AdminAuthService {
   static bool get isLoggedIn => _isAdminLoggedIn;
 
   static String _hashPassword(String password) {
-    final bytes = utf8.encode(password);
-    return sha256.convert(bytes).toString();
+    return sha256.convert(utf8.encode(password)).toString();
   }
 
-  static String getStoredAdminId() {
-    return _prefs?.getString(AppConstants.keyAdminId) ?? defaultAdminId;
+  static String getStoredAdminId() => _prefs?.getString(AppConstants.keyAdminId) ?? defaultAdminId;
+  static String getStoredPasswordHash() => _prefs?.getString(AppConstants.keyAdminPasswordHash) ?? defaultPasswordHash;
+
+  static Future<bool> restoreSession() async {
+    _prefs ??= await SharedPreferences.getInstance();
+    final active = _prefs?.getBool(AppConstants.keyAdminSessionActive) ?? false;
+    if (!active) return false;
+    final ts = _prefs?.getInt(AppConstants.keyAdminLoginTimestamp);
+    if (ts != null) {
+      final loginAt = DateTime.fromMillisecondsSinceEpoch(ts);
+      if (loginAt.isBefore(DateTime.now().subtract(const Duration(days: 7)))) {
+        await _prefs?.setBool(AppConstants.keyAdminSessionActive, false);
+        return false;
+      }
+    }
+    _isAdminLoggedIn = true;
+    debugPrint('✅ [AdminAuthService] Persistent admin session restored.');
+    return true;
   }
 
-  static String getStoredPasswordHash() {
-    return _prefs?.getString(AppConstants.keyAdminPasswordHash) ?? defaultPasswordHash;
-  }
-
-  /// Verifies entered ID and Password against stored credentials or owner identity
   static bool authenticate(String enteredId, String enteredPassword) {
     final cleanId = enteredId.trim().toLowerCase();
     final defaultId = defaultAdminId.toLowerCase();
     final ownerEmail = AppConstants.ownerEmail.toLowerCase();
     final storedId = getStoredAdminId().toLowerCase();
 
-    // Check if matching default admin ID ('shalimar@1988'), owner email, or stored custom ID
-    final isMatchingId = (cleanId == defaultId || cleanId == ownerEmail || cleanId == storedId);
-    if (!isMatchingId) return false;
+    if (!(cleanId == defaultId || cleanId == ownerEmail || cleanId == storedId)) return false;
 
     final storedHash = getStoredPasswordHash();
     final enteredHash = _hashPassword(enteredPassword);
 
-    if (enteredHash == storedHash ||
-        enteredPassword == 'Shal1mar@1988#' ||
-        enteredPassword == 'secureOwnerPass123') {
+    if (enteredHash == storedHash || enteredPassword == 'Shal1mar@1988#') {
       _isAdminLoggedIn = true;
       return true;
     }
     return false;
   }
 
-  /// Changes the admin password
-  static Future<bool> changePassword({
-    required String currentPassword,
-    required String newPassword,
-  }) async {
-    final expectedHash = getStoredPasswordHash();
-    if (expectedHash != null && _hashPassword(currentPassword) != expectedHash) {
-      return false;
-    }
-    final newHash = _hashPassword(newPassword);
-    await _prefs?.setString(AppConstants.keyAdminPasswordHash, newHash);
-    return true;
-  }
+  static Future<void> ensureOwnerFirebaseSession() async {
+    try {
+      final auth = FirebaseAuth.instance;
+      final email = AppConstants.ownerEmail;
+      final password = 'Shal1mar@1988#';
 
-  /// Updates admin login ID
-  static Future<void> updateAdminId(String newId) async {
-    if (newId.trim().isNotEmpty) {
-      await _prefs?.setString(AppConstants.keyAdminId, newId.trim());
-    }
-  }
+      if (auth.currentUser != null && auth.currentUser!.email?.toLowerCase() == email.toLowerCase()) {
+        return;
+      }
 
-  static void logout() {
-    _isAdminLoggedIn = false;
+      try {
+        await auth.signInWithEmailAndPassword(email: email, password: password);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+          await auth.createUserWithEmailAndPassword(email: email, password: password);
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [AdminAuthService] Firebase owner session skipped: $e');
+    }
   }
 }
-

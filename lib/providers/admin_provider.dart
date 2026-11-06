@@ -1,32 +1,59 @@
 import 'package:flutter/foundation.dart';
+import '../services/admin_session_service.dart';
 import '../services/admin_auth_service.dart';
 
 class AdminProvider with ChangeNotifier {
   bool _isAdminMode = false;
   bool _isLoggedIn = false;
+  String? _sessionConflictMessage;
 
   bool get isAdminMode => _isAdminMode;
   bool get isLoggedIn => _isLoggedIn;
+  String? get sessionConflictMessage => _sessionConflictMessage;
 
   Future<void> init() async {
     await AdminAuthService.init();
-    _isLoggedIn = AdminAuthService.isLoggedIn;
-    notifyListeners();
-  }
-
-  bool login(String id, String password) {
-    final success = AdminAuthService.authenticate(id, password);
-    if (success) {
+    if (await AdminAuthService.restoreSession()) {
       _isLoggedIn = true;
       _isAdminMode = true;
-      notifyListeners();
+      await AdminAuthService.ensureOwnerFirebaseSession();
+      _startSessionMonitoring();
+    }
+  }
+
+  Future<bool> login(String id, String password) async {
+    if (AdminAuthService.authenticate(id, password)) {
+      _isLoggedIn = true;
+      _isAdminMode = true;
+      await AdminAuthService.ensureOwnerFirebaseSession();
+      final deviceId = await AdminSessionService.getOrCreateDeviceId();
+      await AdminSessionService.saveLocalSession(deviceId);
+      await AdminSessionService.claimSession();
+      _startSessionMonitoring();
       return true;
     }
     return false;
   }
 
-  void logout() {
-    AdminAuthService.logout();
+  void _startSessionMonitoring() {
+    AdminSessionService.startHeartbeat();
+    AdminSessionService.listenForTakeover(onTakeover: _handleSessionTakenOver);
+  }
+
+  void _handleSessionTakenOver() {
+    _sessionConflictMessage = 'Your admin session was claimed on another device.';
+    _isLoggedIn = false;
+    _isAdminMode = false;
+    notifyListeners();
+  }
+
+  void clearSessionConflictMessage() {
+    _sessionConflictMessage = null;
+    notifyListeners();
+  }
+
+  Future<void> logout() async {
+    await AdminSessionService.signOut();
     _isLoggedIn = false;
     _isAdminMode = false;
     notifyListeners();
@@ -40,22 +67,7 @@ class AdminProvider with ChangeNotifier {
   void enterAdminModeIfAuthorized() {
     if (_isLoggedIn) {
       _isAdminMode = true;
-      notifyListeners();
+      _startSessionMonitoring();
     }
   }
-
-  Future<bool> changePassword(String currentPass, String newPass) async {
-    final success = await AdminAuthService.changePassword(
-      currentPassword: currentPass,
-      newPassword: newPass,
-    );
-    notifyListeners();
-    return success;
-  }
-
-  Future<void> updateAdminId(String newId) async {
-    await AdminAuthService.updateAdminId(newId);
-    notifyListeners();
-  }
 }
-

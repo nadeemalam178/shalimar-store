@@ -11,18 +11,17 @@ import 'services/admin_auth_service.dart';
 import 'services/firebase_config.dart';
 import 'services/notification_service.dart';
 import 'services/storage_service.dart';
+import 'services/supabase_storage_service.dart';
 import 'views/splash/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Force portrait orientation for clean mobile experience
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Set system navigation bar & status bar style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -32,10 +31,14 @@ void main() async {
     ),
   );
 
-  // Initialize offline-first persistent services
   await StorageService.init();
   await AdminAuthService.init();
+  await AdminAuthService.restoreSession();
   await FirebaseConfig.initialize();
+  await SupabaseStorageService.initialize(
+    url: 'https://xuytzirldkqtthqhcwjk.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1eXR6aXJsZGtxdHRocWhjd2prIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5NzYwODcsImV4cCI6MjEwOTU1MjA4N30.W37HrJ73_hd1SkoVm3CJUCGQdoiU3lWXSndWiQMSf4U',
+  );
   await NotificationService.init();
 
   runApp(const ShalimarStoreApp());
