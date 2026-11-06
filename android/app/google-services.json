@@ -12,7 +12,20 @@
           "package_name": "com.shalimarstore.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "741135454571-jg1qpihvfk61fkm74atkf4bskaiufpru.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shalimarstore.app",
+            "certificate_hash": "9b2e6becabaaad2f028b814176ecd2c2baeb5ef4"
+          }
+        },
+        {
+          "client_id": "741135454571-perjur2oera9cb9os25n4rchlp0v078v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCRDdaIHuuL61c4HyDkSgovdmCAjfpx29k"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "741135454571-perjur2oera9cb9os25n4rchlp0v078v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

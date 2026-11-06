@@ -2,7 +2,7 @@
   <img src="assets/images/logo.png" width="140" alt="Shalimar Store Logo" />
 </p>
 
-<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.2.2)</h1>
+<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.2.3)</h1>
 
 <p align="center">
   <b>Official Dual-Mode Kirana & General Store Mobile Application</b><br>
@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v3.2.2-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-v3.2.3-crimson" alt="Version" />
   <img src="https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
-  <img src="https://img.shields.io/badge/Auth-Email%20%7C%20Google%20Sign--In-blue" alt="Authentication" />
+  <img src="https://img.shields.io/badge/Auth-Email%20%7C%20Google%20Sign--In%20Active-blue" alt="Authentication" />
   <img src="https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Dart-3.13+-0175C2?logo=dart&logoColor=white" alt="Dart" />
   <img src="https://img.shields.io/badge/Typography-Plus%20Jakarta%20Sans-indigo" alt="Plus Jakarta Sans" />
@@ -33,6 +33,17 @@
 </p>
 
 Established in **1988** by Mohammad Jamil, **Shalimar General Store** has been a beloved neighborhood landmark for over **35+ years** in Patna. Serving authentic daily essentials, pure mustard oils, premium basmati rice, spices, lentils, fresh dairy, and household goods with personalized doorstep care.
+
+---
+
+## 🚀 What's New in v3.2.3 (Active Google Sign-In & Verified OAuth Client Credentials)
+
+- 🔑 **Active Google Sign-In with Verified OAuth Credentials:**
+  - Integrated updated `google-services.json` containing the registered SHA-1 Android Client (`client_type: 1`) and Web Client ID (`client_type: 3`).
+  - Explicitly configured `GoogleSignIn(serverClientId: '741135454571-perjur2oera9cb9os25n4rchlp0v078v.apps.googleusercontent.com')` to guarantee OpenID Connect ID token issuance on all Android devices.
+  - Seamless 1-tap "Continue with Google" authentication into Firebase and Firestore synchronization.
+- 📦 **Dedicated `arm64-v8a` Single-Asset Release:**
+  - Guaranteed error-free direct OTA updates for physical Android smartphones.
 
 ---
 
