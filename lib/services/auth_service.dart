@@ -12,7 +12,9 @@ import 'storage_service.dart';
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static final GoogleSignIn _googleSignIn = GoogleSignIn();
+  static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
 
   static User? get currentUser => _auth.currentUser;
   static bool get isAuthenticated => _auth.currentUser != null;
@@ -100,6 +102,11 @@ class AuthService {
   /// Sign In / Register with Google
   static Future<UserModel> signInWithGoogle() async {
     try {
+      // Clear any prior cached session to prevent stale error states
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         throw FirebaseAuthException(

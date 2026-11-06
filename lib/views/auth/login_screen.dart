@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
@@ -103,11 +104,115 @@ class _LoginScreenState extends State<LoginScreen> {
       if (e.code != 'canceled') {
         _showErrorSnackBar(e.message ?? 'Google Sign-In failed.');
       }
+    } on PlatformException catch (e) {
+      final errStr = '${e.code} ${e.message} ${e.details}'.toLowerCase();
+      if (errStr.contains('10') || errStr.contains('sign_in_failed') || errStr.contains('apiexception')) {
+        _showGoogleConfigNoticeDialog();
+      } else if (e.code != 'sign_in_canceled') {
+        _showErrorSnackBar('Google Sign-In failed: ${e.message ?? e.code}');
+      }
     } catch (e) {
-      _showErrorSnackBar('Google Sign-In error: $e');
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('10') || errStr.contains('sign_in_failed') || errStr.contains('apiexception')) {
+        _showGoogleConfigNoticeDialog();
+      } else {
+        _showErrorSnackBar('Google Sign-In error: $e');
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showGoogleConfigNoticeDialog() {
+    const sha1 = '9B:2E:6B:EC:AB:AA:AD:2F:02:8B:81:41:76:EC:D2:C2:BA:EB:5E:F4';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.surfaceColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, color: AppColors.accent, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              'Google Sign-In Setup',
+              style: TextStyle(
+                color: context.textPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Google Sign-In requires registering this app\'s SHA-1 fingerprint in your Firebase Console project settings:',
+              style: TextStyle(fontSize: 13, color: context.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: context.isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: context.borderSubtle),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SelectableText(
+                      sha1,
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: context.textPrimary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy_rounded, size: 18),
+                    color: AppColors.primary,
+                    onPressed: () {
+                      Clipboard.setData(const ClipboardData(text: sha1));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('SHA-1 fingerprint copied to clipboard!'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '💡 Instant Alternative: You can create an account or sign in with Email & Password right now without waiting!',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showForgotPasswordDialog() {

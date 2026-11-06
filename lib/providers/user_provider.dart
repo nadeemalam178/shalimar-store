@@ -28,6 +28,20 @@ class UserProvider with ChangeNotifier {
       _profile = _profile.copyWith(favoriteProductIds: savedFavs);
     }
     _pastOrders = StorageService.loadOrders();
+    final firebaseUser = AuthService.currentUser;
+    if (firebaseUser != null) {
+      _currentUserModel = UserModel(
+        uid: firebaseUser.uid,
+        name: firebaseUser.displayName?.isNotEmpty == true
+            ? firebaseUser.displayName!
+            : (_profile.username.isNotEmpty ? _profile.username : 'Customer'),
+        email: firebaseUser.email ?? '',
+        phone: _profile.phone,
+        address: _profile.address,
+        createdAt: DateTime.now(),
+        lastLoginAt: DateTime.now(),
+      );
+    }
     notifyListeners();
   }
 
