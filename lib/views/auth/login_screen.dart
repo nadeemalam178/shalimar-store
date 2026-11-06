@@ -5,9 +5,15 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/theme_extensions.dart';
+import '../../models/user_model.dart';
+import '../../providers/admin_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../services/admin_auth_service.dart';
 import '../../services/auth_service.dart';
+import '../admin/admin_dashboard_screen.dart';
+import '../admin/admin_login_overlay.dart';
 import '../customer/customer_main_screen.dart';
+import '../onboarding/welcome_onboarding_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isSignUp = false;
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _showAdminOverlay = false;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -53,6 +60,30 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         userProvider.setCurrentUser(userModel);
       } else {
+        // Owner credentials direct login support (Shalimar@1988 or owner email)
+        final enteredId = _emailController.text.trim();
+        final enteredPass = _passwordController.text;
+        if (AdminAuthService.authenticate(enteredId, enteredPass)) {
+          final adminProvider = context.read<AdminProvider>();
+          adminProvider.login(enteredId, enteredPass);
+          final now = DateTime.now();
+          userProvider.setCurrentUser(UserModel(
+            uid: 'owner_uid',
+            name: 'Md. Jamil (Owner)',
+            email: AppConstants.ownerEmail,
+            role: 'owner',
+            provider: 'admin',
+            createdAt: now,
+            lastLoginAt: now,
+          ));
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+            );
+          }
+          return;
+        }
+
         final userModel = await AuthService.signInWithEmailPassword(
           email: _emailController.text,
           password: _passwordController.text,
@@ -299,16 +330,18 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.scaffoldBg,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                   // App Logo & Store Branding
                   Hero(
                     tag: 'app_logo',
@@ -469,15 +502,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           keyboardType: TextInputType.emailAddress,
                           style: TextStyle(color: context.textPrimary),
                           decoration: InputDecoration(
-                            labelText: 'Email Address *',
-                            hintText: 'e.g. yourname@gmail.com',
-                            prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
+                            labelText: _isSignUp ? 'Email Address *' : 'User ID or Email *',
+                            hintText: _isSignUp ? 'e.g. yourname@gmail.com' : 'e.g. Shalimar@1988 or email',
+                            prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary),
                             filled: true,
                             fillColor: context.inputFill,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           validator: (val) {
-                            if (val == null || val.trim().isEmpty || !val.contains('@')) {
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Please enter your ${_isSignUp ? 'email address' : 'User ID or email'}';
+                            }
+                            final clean = val.trim().toLowerCase();
+                            if (!_isSignUp && (clean == 'shalimar@1988' || clean == 'shalimar')) {
+                              return null;
+                            }
+                            if (_isSignUp && (!clean.contains('@') || !clean.contains('.'))) {
                               return 'Please enter a valid email address';
                             }
                             return null;
@@ -612,7 +652,46 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 18),
+
+                  // Quick Access Links for Owner & App Tour
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() => _showAdminOverlay = true);
+                        },
+                        icon: const Icon(Icons.admin_panel_settings_rounded, size: 16, color: AppColors.primary),
+                        label: const Text(
+                          'Store Owner Login',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      Text('•', style: TextStyle(color: context.textSecondary, fontSize: 12)),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const WelcomeOnboardingScreen()),
+                          );
+                        },
+                        icon: Icon(Icons.slideshow_rounded, size: 16, color: context.textSecondary),
+                        label: Text(
+                          'App Tour (Intro)',
+                          style: TextStyle(fontSize: 12, color: context.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
                   Text(
                     'Alamganj, Ashok Rajpath, Patna - 800007\nZero Gateway Fees • Direct WhatsApp Delivery',
                     textAlign: TextAlign.center,
@@ -624,7 +703,30 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
+      if (_showAdminOverlay)
+        AdminLoginOverlay(
+          onDismiss: () => setState(() => _showAdminOverlay = false),
+          onLoginSuccess: () {
+            setState(() => _showAdminOverlay = false);
+            final userProvider = context.read<UserProvider>();
+            final now = DateTime.now();
+            userProvider.setCurrentUser(UserModel(
+              uid: 'owner_uid',
+              name: 'Md. Jamil (Owner)',
+              email: AppConstants.ownerEmail,
+              role: 'owner',
+              provider: 'admin',
+              createdAt: now,
+              lastLoginAt: now,
+            ));
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+            );
+          },
+        ),
+    ],
+  ),
+);
   }
 }
 

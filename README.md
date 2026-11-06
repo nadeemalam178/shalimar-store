@@ -2,7 +2,7 @@
   <img src="assets/images/logo.png" width="140" alt="Shalimar Store Logo" />
 </p>
 
-<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.2.4)</h1>
+<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.2.5)</h1>
 
 <p align="center">
   <b>Official Dual-Mode Kirana & General Store Mobile Application</b><br>
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v3.2.4-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-v3.2.5-crimson" alt="Version" />
   <img src="https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
   <img src="https://img.shields.io/badge/Auth-Email%20%7C%20Google%20Sign--In%20Active-blue" alt="Authentication" />
   <img src="https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
@@ -36,16 +36,17 @@ Established in **1988** by Mohammad Jamil, **Shalimar General Store** has been a
 
 ---
 
-## 🚀 What's New in v3.2.4 (Resolved Google Sign-In Hang & GitHub Actions Automated CI/CD)
+## 🚀 What's New in v3.2.5 (Owner Direct Sign-In, Cloud GitHub CI/CD & App Tour)
 
-- ⚡ **Fixed Google Sign-In Hang**:
-  - Eliminated the race condition caused by pre-emptive `signOut()` before `signIn()` that hung Google Play Services platform channels.
-  - Removed unrecognized `'profile'` scope string that caused Google Play Services to stall.
-  - Added strict timeouts (45s Google Sign-In, 20s token retrieval, 5s Firestore profile sync) with instant UI unfreezing.
-  - Non-blocking Firestore profile synchronization so customer catalog navigation happens instantaneously.
-- 🤖 **Automated GitHub Actions CI/CD Pipeline**:
-  - Securely decoded production release keystore from repository secrets.
-  - Automated testing, building, and publishing dedicated `arm64-v8a` release directly on GitHub.
+- 🔑 **Dual-Path Owner Sign-In**:
+  - The store owner can now sign in using **Admin ID: `Shalimar@1988`** and **Password: `Shal1mar@1988#`** (or `nadeemalam178@gmail.com`).
+  - Added direct **"Store Owner Login"** modal button accessible right from the initial Login Screen and Customer Screen header.
+  - Automatically recognizes owner credentials entered into the main sign-in form without requiring domain email format.
+- 📖 **On-Demand App Tour**:
+  - Re-accessible 4-slide introductory onboarding tour (`WelcomeOnboardingScreen`) anytime via the "App Tour (Intro)" button on the login screen.
+- 🤖 **100% GitHub Actions Cloud-Compiled Release**:
+  - Resolved Gradle signing keystore property formatting using clean `printf` injection without BOM or whitespace errors.
+  - Releases are compiled and published directly on GitHub Actions.
 
 ---
 

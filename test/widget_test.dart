@@ -67,12 +67,23 @@ void main() {
       expect(AdminAuthService.authenticate('admin', 'wrong_pass'), isFalse);
       expect(AdminAuthService.authenticate('random_user', 'shalimar123'), isFalse);
 
-      // Test secure owner credentials pass
-      final isAuth = AdminAuthService.authenticate(
-        AppConstants.ownerEmail,
-        'secureOwnerPass123',
+      // Test secure owner credentials pass with Shalimar@1988
+      final isAuth1 = AdminAuthService.authenticate(
+        'Shalimar@1988',
+        'Shal1mar@1988#',
       );
-      expect(isAuth, isTrue);
+      expect(isAuth1, isTrue);
+      expect(AdminAuthService.isLoggedIn, isTrue);
+
+      AdminAuthService.logout();
+      expect(AdminAuthService.isLoggedIn, isFalse);
+
+      // Test secure owner credentials pass with owner email
+      final isAuth2 = AdminAuthService.authenticate(
+        AppConstants.ownerEmail,
+        'Shal1mar@1988#',
+      );
+      expect(isAuth2, isTrue);
       expect(AdminAuthService.isLoggedIn, isTrue);
 
       AdminAuthService.logout();
