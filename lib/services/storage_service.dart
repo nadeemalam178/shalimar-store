@@ -13,6 +13,18 @@ class StorageService {
 
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
+
+    // ── Auto-clear old cached data on app version update ──
+    // When the version changes (e.g., v3.3.0 → v3.4.0), wipe stale
+    // SharedPreferences data so prefilled demo data from older builds
+    // does not carry over into production.
+    final storedVersion = _prefs?.getString('app_version');
+    final currentVersion = AppConstants.appVersion;
+    if (storedVersion != null && storedVersion != currentVersion) {
+      await clearAll();
+      debugPrint('🧹 [StorageService] Cleared stale cache: $storedVersion → $currentVersion');
+    }
+    await _prefs?.setString('app_version', currentVersion);
   }
 
   // ── Cart ──
@@ -70,6 +82,10 @@ class StorageService {
       AppConstants.keyPastOrders,
       orders.map((e) => jsonEncode(e.toJson())).toList(),
     );
+  }
+
+  static Future<void> clearAll() async {
+    await _prefs?.clear();
   }
 
   // ── Products ──
