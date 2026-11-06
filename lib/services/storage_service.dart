@@ -21,7 +21,6 @@ class StorageService {
         // Corrupted cache — start clean
       }
     }
-    // v3.4.0+: Store starts empty; owner builds inventory in admin panel
     return [];
   }
 
@@ -30,8 +29,15 @@ class StorageService {
     await _prefs?.setString(AppConstants.keyProducts, jsonEncode(jsonList));
   }
 
+  static List<String> loadCustomCategories() {
+    return _prefs?.getStringList(AppConstants.keyCustomCategories) ?? [];
+  }
+
+  static Future<void> saveCustomCategories(List<String> categories) async {
+    await _prefs?.setStringList(AppConstants.keyCustomCategories, categories);
+  }
+
   static Future<List<Product>> loadStandardKiranaCatalogue() async {
-    // v3.4.0: No bundled demo data — owner starts fresh
     return [];
   }
 }

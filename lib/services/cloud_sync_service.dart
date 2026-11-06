@@ -84,7 +84,7 @@ class CloudSyncService {
     final firestore = _firestore;
     if (firestore == null) return;
     try {
-      final data = product.toJson()..['id'] = product.id;
+      final data = product.toJson();
       await firestore.collection(_collectionPath).doc(product.id).set(data);
       debugPrint('☁️ [CloudSync] Synced ${product.id} to cloud');
     } catch (e) {
