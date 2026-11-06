@@ -61,6 +61,13 @@ class AdminAuthService {
     return false;
   }
 
+  static Future<void> logout() async {
+    _isAdminLoggedIn = false;
+    await _prefs?.setBool(AppConstants.keyAdminSessionActive, false);
+    await _prefs?.remove(AppConstants.keyAdminLoginTimestamp);
+    await _prefs?.remove(AppConstants.keyAdminDeviceId);
+  }
+
   static Future<void> ensureOwnerFirebaseSession() async {
     try {
       final auth = FirebaseAuth.instance;
