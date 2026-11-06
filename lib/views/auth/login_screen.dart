@@ -66,19 +66,10 @@ class _LoginScreenState extends State<LoginScreen> {
         if (AdminAuthService.authenticate(enteredId, enteredPass)) {
           final adminProvider = context.read<AdminProvider>();
           adminProvider.login(enteredId, enteredPass);
-          final now = DateTime.now();
-          userProvider.setCurrentUser(UserModel(
-            uid: 'owner_uid',
-            name: 'Md. Jamil (Owner)',
-            email: AppConstants.ownerEmail,
-            role: 'owner',
-            provider: 'admin',
-            createdAt: now,
-            lastLoginAt: now,
-          ));
+          // Owner goes directly to Admin Dashboard
           if (mounted) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+              MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
             );
           }
           return;
@@ -608,6 +599,60 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 18),
 
+                        // ── Store Owner Section ── Prominent Direct Owner Login ──
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Store Owner',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() => _showAdminOverlay = true);
+                                  },
+                                  icon: const Icon(Icons.admin_panel_settings_rounded, size: 18),
+                                  label: const Text(
+                                    'Owner Login (Shalimar@1988)',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'ID: Shalimar@1988  •  Password: Shal1mar@1988#',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
                         // Divider
                         Row(
                           children: [
@@ -708,19 +753,9 @@ class _LoginScreenState extends State<LoginScreen> {
           onDismiss: () => setState(() => _showAdminOverlay = false),
           onLoginSuccess: () {
             setState(() => _showAdminOverlay = false);
-            final userProvider = context.read<UserProvider>();
-            final now = DateTime.now();
-            userProvider.setCurrentUser(UserModel(
-              uid: 'owner_uid',
-              name: 'Md. Jamil (Owner)',
-              email: AppConstants.ownerEmail,
-              role: 'owner',
-              provider: 'admin',
-              createdAt: now,
-              lastLoginAt: now,
-            ));
+            // Owner goes directly to Admin Dashboard, not customer screen
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+              MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
             );
           },
         ),
