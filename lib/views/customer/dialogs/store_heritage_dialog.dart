@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/theme_extensions.dart';
+import '../../../widgets/full_screen_image_viewer.dart';
 
 class StoreHeritageDialog extends StatelessWidget {
   const StoreHeritageDialog({super.key});
@@ -64,11 +65,21 @@ class StoreHeritageDialog extends StatelessWidget {
                 // Real Store Front Photo with Close Button
                 Stack(
                   children: [
-                    Image.asset(
-                      AppConstants.storeFrontImagePath,
-                      height: 220,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
+                    GestureDetector(
+                      onTap: () {
+                        FullScreenImageViewer.open(
+                          context,
+                          assetPath: AppConstants.storeFrontImagePath,
+                          title: 'Shalimar Store (Est. 1988)',
+                          subtitle: 'Alamganj, Ashok Rajpath, Patna',
+                        );
+                      },
+                      child: Image.asset(
+                        AppConstants.storeFrontImagePath,
+                        height: 220,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     Container(
                       height: 220,

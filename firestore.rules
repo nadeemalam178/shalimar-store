@@ -43,6 +43,18 @@ service cloud.firestore {
       allow write: if isOwner();
     }
 
+    // WhatsApp Order Logs: Customers can record their order logs; Store Owner has full access to read & analyze
+    match /orders/{orderId} {
+      allow create: if isAuthenticated();
+      allow read, write: if isOwner();
+    }
+
+    // Broadcast Notifications: Open read for all customers & guests; writes restricted exclusively to Store Owner
+    match /broadcast_notifications/{notificationId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
     // Default deny all other collections
     match /{document=**} {
       allow read, write: if false;

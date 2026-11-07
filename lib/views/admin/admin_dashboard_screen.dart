@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -11,10 +12,13 @@ import '../../core/utils/whatsapp_helper.dart';
 import '../../models/product.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/catalogue_provider.dart';
+import '../auth/login_screen.dart';
 import '../customer/customer_main_screen.dart';
 import 'add_edit_product_dialog.dart';
+import 'admin_side_panel_drawer.dart';
 import 'manage_categories_dialog.dart';
 import 'store_settings_dialog.dart';
+import '../../widgets/full_screen_image_viewer.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -29,11 +33,188 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   String _selectedStockFilter = 'All'; // 'All', 'In Stock', 'Out of Stock'
   bool _isBreakdownExpanded = true;
   final _searchController = TextEditingController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  // Multi-Select Mode
+  bool _isSelectionMode = false;
+  final Set<String> _selectedProductIds = <String>{};
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _enterSelectionMode(String initialProductId) {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _isSelectionMode = true;
+      _selectedProductIds.add(initialProductId);
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedProductIds.clear();
+    });
+  }
+
+  void _toggleProductSelection(String productId) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (_selectedProductIds.contains(productId)) {
+        _selectedProductIds.remove(productId);
+        if (_selectedProductIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedProductIds.add(productId);
+      }
+    });
+  }
+
+  void _selectAllProducts(List<Product> products) {
+    setState(() {
+      if (_selectedProductIds.length == products.length) {
+        _selectedProductIds.clear();
+        _isSelectionMode = false;
+      } else {
+        _selectedProductIds.addAll(products.map((p) => p.id));
+      }
+    });
+  }
+
+  Future<void> _handleBatchDelete(CatalogueProvider catalogue) async {
+    final count = _selectedProductIds.length;
+    if (count == 0) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.surfaceColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.delete_sweep_rounded, color: Colors.red),
+            const SizedBox(width: 8),
+            Text('Delete $count Products?', style: TextStyle(color: context.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to permanently delete $count selected products? This will remove them from the store catalogue and cloud database.',
+          style: TextStyle(color: context.textSecondary, fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Delete $count Items'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final idsToDelete = List<String>.from(_selectedProductIds);
+      _exitSelectionMode();
+
+      for (final id in idsToDelete) {
+        await catalogue.deleteProduct(id);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Successfully deleted $count products.'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleBatchMoveCategory(CatalogueProvider catalogue) async {
+    final count = _selectedProductIds.length;
+    if (count == 0) return;
+
+    final targetCategory = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: context.surfaceColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.drive_file_move_rounded, color: AppColors.primary),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Move $count Products to Category',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.textPrimary),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Select destination category for the $count selected products:',
+                style: TextStyle(fontSize: 12, color: context.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: catalogue.categories.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (ctx, index) {
+                    final cat = catalogue.categories[index];
+                    if (cat == 'All') return const SizedBox.shrink();
+                    return ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.folder_outlined, color: AppColors.primary, size: 20),
+                      title: Text(cat, style: TextStyle(fontWeight: FontWeight.bold, color: context.textPrimary)),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 12),
+                      onTap: () => Navigator.pop(ctx, cat),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (targetCategory != null && targetCategory.isNotEmpty && mounted) {
+      final idsToMove = List<String>.from(_selectedProductIds);
+      _exitSelectionMode();
+
+      for (final id in idsToMove) {
+        final existing = catalogue.products.firstWhere((p) => p.id == id, orElse: () => catalogue.products.first);
+        if (existing.id == id) {
+          final updated = existing.copyWith(category: targetCategory);
+          await catalogue.updateProduct(updated);
+        }
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Moved $count products to "$targetCategory".'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _showAddCategoryDialog(
@@ -140,112 +321,162 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: context.scaffoldBg,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: context.surfaceColor,
-          elevation: 0,
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  color: AppColors.accent,
-                  shape: BoxShape.circle,
+        endDrawer: const AdminSidePanelDrawer(),
+        appBar: _isSelectionMode
+            ? AppBar(
+                backgroundColor: context.surfaceColor,
+                elevation: 2,
+                leading: IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  tooltip: 'Cancel Selection',
+                  onPressed: _exitSelectionMode,
                 ),
-                child: const CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.white,
-                  backgroundImage: AssetImage(AppConstants.logoPath),
+                title: Text(
+                  '${_selectedProductIds.length} Selected',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: context.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Admin Management',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: context.textPrimary,
+                actions: [
+                  TextButton(
+                    onPressed: () => _selectAllProducts(displayedItems),
+                    child: Text(
+                      _selectedProductIds.length == displayedItems.length
+                          ? 'Deselect All'
+                          : 'Select All',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  Text(
-                    'Shalimar Store Control Panel',
-                    style: TextStyle(fontSize: 10, color: context.textSecondary),
+                  IconButton(
+                    icon: const Icon(Icons.drive_file_move_rounded, color: AppColors.primary),
+                    tooltip: 'Move to Category',
+                    onPressed: () => _handleBatchMoveCategory(catalogue),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent),
+                    tooltip: 'Delete Selected',
+                    onPressed: () => _handleBatchDelete(catalogue),
+                  ),
+                ],
+              )
+            : AppBar(
+                automaticallyImplyLeading: false,
+                backgroundColor: context.surfaceColor,
+                elevation: 0,
+                title: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: AppColors.accent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Colors.white,
+                        backgroundImage: AssetImage(AppConstants.logoPath),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Admin Management',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'Shalimar Store Control Panel',
+                          style: TextStyle(fontSize: 10, color: context.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.dashboard_customize_rounded, color: AppColors.primary),
+                    tooltip: 'Shalimar Control Hub (Insights, Gemini AI, Share App)',
+                    onPressed: () {
+                      _scaffoldKey.currentState?.openEndDrawer();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.category_outlined),
+                    tooltip: 'Manage Categories',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => const ManageCategoriesDialog(),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings_outlined),
+                    tooltip: 'Store Settings & Password',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => const StoreSettingsDialog(),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.storefront_rounded,
+                      color: AppColors.primary,
+                    ),
+                    tooltip: 'Switch to Customer View',
+                    onPressed: () {
+                      admin.exitAdminMode();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+                        (route) => false,
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.logout_rounded,
+                      color: Colors.redAccent,
+                    ),
+                    tooltip: 'Sign Out Admin',
+                    onPressed: () async {
+                      await admin.logout();
+                      if (context.mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          (route) => false,
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
-            ],
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.category_outlined),
-              tooltip: 'Manage Categories',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => const ManageCategoriesDialog(),
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.settings_outlined),
-              tooltip: 'Store Settings & Password',
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => const StoreSettingsDialog(),
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.storefront_rounded,
-                color: AppColors.primary,
-              ),
-              tooltip: 'Switch to Customer View',
-              onPressed: () {
-                admin.exitAdminMode();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
-                  (route) => false,
-                );
-              },
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.logout_rounded,
-                color: Colors.redAccent,
-              ),
-              tooltip: 'Sign Out Admin',
-              onPressed: () async {
-                await admin.logout();
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
-                    (route) => false,
+        floatingActionButton: _isSelectionMode
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => const AddEditProductDialog(),
                   );
-                }
-              },
-            ),
-          ],
-        ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (_) => const AddEditProductDialog(),
-          );
-        },
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text(
-          'Add Product',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
+                },
+                backgroundColor: AppColors.primary,
+                icon: const Icon(Icons.add_rounded, color: Colors.white),
+                label: const Text(
+                  'Add Product',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -394,44 +625,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   const SizedBox(height: 10),
 
-                  // Category Filter Chips with "+ Add Category" button
+                  // Category Filter Chips
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Categories Filter',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                          color: context.textSecondary,
                         ),
                       ),
-                      InkWell(
-                        onTap: () => _showAddCategoryDialog(context, catalogue),
-                        borderRadius: BorderRadius.circular(20),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.add_circle_outline,
-                                size: 14,
-                                color: AppColors.primary,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                '+ Add Category',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
+                      Text(
+                        '${catalogue.categories.length - 1} categories',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: context.textSecondary,
                         ),
                       ),
                     ],
@@ -654,17 +864,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final item = displayedItems[index];
+                      final isSelected = _selectedProductIds.contains(item.id);
+
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: context.surfaceColor,
+                          color: isSelected
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : context.surfaceColor,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: item.inStock
-                                ? context.borderSubtle
-                                : Colors.red.shade400,
-                            width: item.inStock ? 1 : 1.5,
+                            color: isSelected
+                                ? AppColors.primary
+                                : (item.inStock
+                                    ? context.borderSubtle
+                                    : Colors.red.shade400),
+                            width: isSelected ? 2 : (item.inStock ? 1 : 1.5),
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -676,130 +891,176 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             ),
                           ],
                         ),
-                        child: Row(
-                          children: [
-                            // Image or placeholder with local file support
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: context.isDark
-                                    ? const Color(0xFF262626)
-                                    : AppColors.surfaceVariant,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: _buildItemImage(item.imageUrl),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-
-                            // Info
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onLongPress: () {
+                              if (!_isSelectionMode) {
+                                _enterSelectionMode(item.id);
+                              }
+                            },
+                            onTap: () {
+                              if (_isSelectionMode) {
+                                _toggleProductSelection(item.id);
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
                                 children: [
-                                  Text(
-                                    item.name,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: item.inStock
-                                          ? context.textPrimary
-                                          : context.textSecondary,
+                                  // Selection checkbox indicator in selection mode
+                                  if (_isSelectionMode) ...[
+                                    Icon(
+                                      isSelected
+                                          ? Icons.check_circle_rounded
+                                          : Icons.radio_button_unchecked_rounded,
+                                      color: isSelected ? AppColors.primary : Colors.grey,
+                                      size: 22,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${item.category} • ${item.unit}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: context.textSecondary,
+                                    const SizedBox(width: 10),
+                                  ],
+
+                                  // Image or placeholder with local file support & Full-Screen Pinch Zoom
+                                  GestureDetector(
+                                    onTap: () {
+                                      if (item.imageUrl.isNotEmpty) {
+                                        FullScreenImageViewer.open(
+                                          context,
+                                          imageUrl: item.imageUrl,
+                                          title: item.name,
+                                          subtitle: '${item.category} • ${item.unit}',
+                                          price: item.price,
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color: context.isDark
+                                            ? const Color(0xFF262626)
+                                            : AppColors.surfaceVariant,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: _buildItemImage(item.imageUrl),
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    CurrencyFormatter.format(item.price),
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w900,
-                                      color: item.inStock
-                                          ? AppColors.primary
-                                          : Colors.grey,
+                                  const SizedBox(width: 12),
+
+                                  // Info
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item.name,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: item.inStock
+                                                ? context.textPrimary
+                                                : context.textSecondary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${item.category} • ${item.unit}',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: context.textSecondary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          CurrencyFormatter.format(item.price),
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w900,
+                                            color: item.inStock
+                                                ? AppColors.primary
+                                                : Colors.grey,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
+
+                                  // Stock Switch (1-tap toggle)
+                                  if (!_isSelectionMode)
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Switch(
+                                          value: item.inStock,
+                                          activeThumbColor: AppColors.success,
+                                          inactiveThumbColor: Colors.red,
+                                          onChanged: (_) =>
+                                              catalogue.toggleStock(item.id),
+                                        ),
+                                        Text(
+                                          item.inStock ? 'In Stock' : 'Out of Stock',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                            color: item.inStock
+                                                ? AppColors.success
+                                                : Colors.red,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                  // Edit & Share Action Buttons (Hidden during Selection Mode)
+                                  if (!_isSelectionMode)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.share_outlined,
+                                            size: 19,
+                                            color: Color(0xFF25D366),
+                                          ),
+                                          tooltip: 'Share on WhatsApp',
+                                          onPressed: () {
+                                            WhatsAppHelper.shareProduct(
+                                              context: context,
+                                              name: item.name,
+                                              category: item.category,
+                                              price: item.price,
+                                              mrp: item.mrp,
+                                              unit: item.unit,
+                                              imageUrl: item.imageUrl,
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.edit_outlined,
+                                            size: 20,
+                                            color: Colors.grey,
+                                          ),
+                                          tooltip: 'Edit Product Details',
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (_) =>
+                                                  AddEditProductDialog(productToEdit: item),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                 ],
                               ),
                             ),
-
-                            // Stock Switch (1-tap toggle)
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Switch(
-                                  value: item.inStock,
-                                  activeThumbColor: AppColors.success,
-                                  inactiveThumbColor: Colors.red,
-                                  onChanged: (_) =>
-                                      catalogue.toggleStock(item.id),
-                                ),
-                                Text(
-                                  item.inStock ? 'In Stock' : 'Out of Stock',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: item.inStock
-                                        ? AppColors.success
-                                        : Colors.red,
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            // Edit & Share Action Buttons
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.share_outlined,
-                                    size: 19,
-                                    color: Color(0xFF25D366),
-                                  ),
-                                  tooltip: 'Share on WhatsApp',
-                                  onPressed: () {
-                                    WhatsAppHelper.shareProduct(
-                                      context: context,
-                                      name: item.name,
-                                      category: item.category,
-                                      price: item.price,
-                                      mrp: item.mrp,
-                                      unit: item.unit,
-                                      imageUrl: item.imageUrl,
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.edit_outlined,
-                                    size: 20,
-                                    color: Colors.grey,
-                                  ),
-                                  tooltip: 'Edit Product Details',
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (_) =>
-                                          AddEditProductDialog(productToEdit: item),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
+                          ),
                         ),
                       );
                     }, childCount: displayedItems.length),
@@ -808,8 +1069,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ],
       ),
     ),
-    );
-  }
+  );
+}
 
   Widget _buildStockFilterChip(
     String key,

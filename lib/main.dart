@@ -6,6 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'providers/admin_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/catalogue_provider.dart';
+import 'providers/theme_provider.dart';
 import 'providers/user_provider.dart';
 import 'services/admin_auth_service.dart';
 import 'services/firebase_config.dart';
@@ -51,18 +52,21 @@ class ShalimarStoreApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
         ChangeNotifierProvider(create: (_) => UserProvider()..init()),
         ChangeNotifierProvider(create: (_) => CatalogueProvider()..init()),
         ChangeNotifierProvider(create: (_) => CartProvider()..init()),
         ChangeNotifierProvider(create: (_) => AdminProvider()..init()),
       ],
-      child: MaterialApp(
-        title: AppConstants.appName,
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        home: const SplashScreen(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) => MaterialApp(
+          title: AppConstants.appName,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
+          home: const SplashScreen(),
+        ),
       ),
     );
   }

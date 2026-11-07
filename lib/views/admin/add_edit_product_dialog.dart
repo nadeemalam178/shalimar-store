@@ -8,8 +8,11 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_extensions.dart';
 import '../../models/product.dart';
 import '../../providers/catalogue_provider.dart';
+import '../../services/gemini_service.dart';
 import '../../services/image_upload_service.dart';
 import '../../services/product_draft_service.dart';
+import '../../services/storage_service.dart';
+import '../../widgets/full_screen_image_viewer.dart';
 
 class AddEditProductDialog extends StatefulWidget {
   final Product? productToEdit;
@@ -33,6 +36,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   String? _localImagePath;
   bool _showUrlField = false;
   bool _isSaving = false;
+  bool _isAnalyzingWithGemini = false;
   bool _hasRestoredDraft = false;
   bool _isInitializing = false;
   Timer? _draftDebounce;
@@ -354,6 +358,62 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     }
   }
 
+  Future<void> _autoFillWithGemini() async {
+    if (_localImagePath == null) return;
+    final file = File(_localImagePath!);
+    if (!file.existsSync()) return;
+
+    setState(() => _isAnalyzingWithGemini = true);
+
+    try {
+      final bytes = await file.readAsBytes();
+      final extracted = await GeminiService.extractProductFromImage(
+        imageBytes: bytes,
+        mimeType: _localImagePath!.endsWith('.png') ? 'image/png' : 'image/jpeg',
+      );
+
+      if (extracted != null && mounted) {
+        setState(() {
+          if (extracted.name.isNotEmpty) _nameCtrl.text = extracted.name;
+          if (extracted.packSize.isNotEmpty) _unitCtrl.text = extracted.packSize;
+          if (extracted.mrp > 0) _mrpCtrl.text = extracted.mrp.toStringAsFixed(0);
+          if (extracted.price > 0) _priceCtrl.text = extracted.price.toStringAsFixed(0);
+          if (extracted.description.isNotEmpty) _descCtrl.text = extracted.description;
+
+          // Check if category matches one of the catalogue categories
+          final catProvider = context.read<CatalogueProvider>();
+          if (catProvider.categories.contains(extracted.category)) {
+            _category = extracted.category;
+          }
+        });
+
+        await _saveCurrentDraft();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✨ Gemini Pro auto-filled product details successfully!'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gemini could not analyze image. Please fill details manually.'),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('⚠️ [AddEditProduct] Gemini auto-fill error: $e');
+    } finally {
+      if (mounted) setState(() => _isAnalyzingWithGemini = false);
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_isSaving) return;
@@ -474,64 +534,106 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     final hasUrl = _imageCtrl.text.startsWith('http');
 
     if (hasLocal || hasUrl) {
-      return Stack(
+      return Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            height: 140,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: hasLocal
-                  ? Image.file(
-                      File(_localImagePath!),
-                      fit: BoxFit.cover,
-                    )
-                  : Image.network(
-                      _imageCtrl.text,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const Center(
-                        child: Icon(Icons.broken_image, size: 36, color: Colors.grey),
+          Stack(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  if (hasLocal) {
+                    FullScreenImageViewer.open(
+                      context,
+                      imageFile: File(_localImagePath!),
+                      title: _nameCtrl.text.isNotEmpty ? _nameCtrl.text : 'Product Image Preview',
+                      subtitle: _category,
+                    );
+                  } else if (hasUrl) {
+                    FullScreenImageViewer.open(
+                      context,
+                      imageUrl: _imageCtrl.text,
+                      title: _nameCtrl.text.isNotEmpty ? _nameCtrl.text : 'Product Image Preview',
+                      subtitle: _category,
+                    );
+                  }
+                },
+                child: Container(
+                  height: 140,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: hasLocal
+                        ? Image.file(
+                            File(_localImagePath!),
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
+                            _imageCtrl.text,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const Center(
+                              child: Icon(Icons.broken_image, size: 36, color: Colors.grey),
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Colors.black.withAlpha(160),
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.refresh, size: 16, color: Colors.white),
+                        onPressed: () => _pickImage(ImageSource.gallery),
                       ),
                     ),
-            ),
-          ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.black.withAlpha(160),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.refresh, size: 16, color: Colors.white),
-                    onPressed: () => _pickImage(ImageSource.gallery),
-                  ),
+                    const SizedBox(width: 6),
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Colors.red.withAlpha(200),
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.delete, size: 16, color: Colors.white),
+                        onPressed: () {
+                          setState(() {
+                            _localImagePath = null;
+                            _imageCtrl.clear();
+                          });
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 6),
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.red.withAlpha(200),
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.delete, size: 16, color: Colors.white),
-                    onPressed: () {
-                      setState(() {
-                        _localImagePath = null;
-                        _imageCtrl.clear();
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (hasLocal && StorageService.isGeminiConfigured()) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: _isAnalyzingWithGemini
+                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.auto_awesome, size: 16),
+                label: Text(_isAnalyzingWithGemini ? 'Gemini AI is analyzing...' : '✨ Auto-Fill Details with Gemini AI'),
+                onPressed: _isAnalyzingWithGemini ? null : _autoFillWithGemini,
+              ),
+            ),
+          ],
         ],
       );
     }
@@ -742,7 +844,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<String>(
-                                  value: availableCats.contains(_category) ? _category : availableCats.first,
+                                  initialValue: availableCats.contains(_category) ? _category : availableCats.first,
                                   decoration: const InputDecoration(labelText: 'Category *'),
                                   items: availableCats.map((c) {
                                     return DropdownMenuItem(value: c, child: Text(c));
@@ -832,7 +934,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
-                              value: _isCustomUnit ? 'Custom' : _selectedUnit,
+                              initialValue: _isCustomUnit ? 'Custom' : _selectedUnit,
                               decoration: const InputDecoration(labelText: 'Pack Size / Unit *'),
                               items: [
                                 ..._standardUnits.map((u) => DropdownMenuItem(value: u, child: Text(u))),

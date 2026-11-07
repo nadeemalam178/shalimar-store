@@ -123,6 +123,23 @@ class WhatsAppHelper {
     }
   }
 
+  /// Launch direct WhatsApp chat with any customer phone
+  static Future<bool> launchWhatsAppChat({
+    required String phoneNumber,
+    String? message,
+  }) async {
+    final cleanPhone = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    final msg = message != null ? Uri.encodeComponent(message) : '';
+    final uri = Uri.parse('https://wa.me/$cleanPhone${msg.isNotEmpty ? '?text=$msg' : ''}');
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
   /// Launch UPI Intent directly for seamless zero-fee payment
   static Future<bool> launchUpiPayment({
     required double amount,

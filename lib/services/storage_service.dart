@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,7 +8,6 @@ import '../models/cart_item.dart';
 import '../models/order_model.dart';
 import '../models/product.dart';
 import '../models/user_profile.dart';
-import 'product_draft_service.dart';
 
 class StorageService {
   static SharedPreferences? _prefs;
@@ -17,36 +15,10 @@ class StorageService {
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
 
-    // ── v4.0.0 Clean Reset: Clear Product Directory & Log Out Every Session ──
-    // Clears the product catalogue cache so the Owner can add real store products freshly,
-    // and cleanly logs out all admin and customer sessions for a fresh start after updating.
-    final hasResetV4 = _prefs?.getBool('v4_clean_reset_applied') ?? false;
-    final storedVersion = _prefs?.getString('app_version');
-    final currentVersion = AppConstants.appVersion;
-
-    if (!hasResetV4 || (storedVersion != null && storedVersion != currentVersion)) {
-      // 1. Clear product catalogue and custom categories cache
-      await clearCatalogueCache();
-
-      // 2. Clear any lingering form drafts
-      await ProductDraftService.clearDraft();
-
-      // 3. Log out Admin session
-      await _prefs?.setBool(AppConstants.keyAdminSessionActive, false);
-      await _prefs?.remove(AppConstants.keyAdminLoginTimestamp);
-      await _prefs?.remove(AppConstants.keyAdminDeviceId);
-
-      // 4. Log out Customer profile & Firebase Auth
-      await _prefs?.remove(AppConstants.keyUsername);
-      try {
-        await FirebaseAuth.instance.signOut();
-      } catch (_) {}
-
-      await _prefs?.setBool('v4_clean_reset_applied', true);
-      debugPrint('🧹 [StorageService] v4.0.0 Update: Cleared product catalogue and logged out all sessions.');
-    }
-
-    await _prefs?.setString('app_version', currentVersion);
+    // ── Persistent Sessions Across Updates ──
+    // Ensures that whenever the app updates, active admin and customer sessions
+    // are preserved permanently. Zero auto-logout on app updates.
+    await _prefs?.setString('app_version', AppConstants.appVersion);
   }
 
   /// Clears only the cached product catalogue and custom categories,
@@ -174,6 +146,61 @@ class StorageService {
 
   static Future<void> setLastPromptedUpdateVersion(String version) async {
     await _prefs?.setString('last_prompted_update_version', version);
+  }
+
+  // ── Gemini Pro AI Preferences & Settings ──
+  static const String keyGeminiApiKey = 'gemini_api_key';
+  static const String keyBroadcastFrequency = 'gemini_broadcast_frequency';
+  static const String keyLastBroadcastTimestamp = 'gemini_last_broadcast_ts';
+  static const String keyLastSeenBroadcastTimestamp = 'customer_last_seen_broadcast_ts';
+
+  static String getGeminiApiKey() {
+    return _prefs?.getString(keyGeminiApiKey)?.trim() ?? '';
+  }
+
+  static Future<void> setGeminiApiKey(String apiKey) async {
+    final trimmed = apiKey.trim();
+    if (trimmed.isEmpty) {
+      await _prefs?.remove(keyGeminiApiKey);
+    } else {
+      await _prefs?.setString(keyGeminiApiKey, trimmed);
+    }
+  }
+
+  static bool isGeminiConfigured() {
+    return getGeminiApiKey().isNotEmpty;
+  }
+
+  static bool isGeminiFeatureEnabled(String featureKey, {bool defaultValue = true}) {
+    return _prefs?.getBool('gemini_feat_$featureKey') ?? defaultValue;
+  }
+
+  static Future<void> setGeminiFeatureEnabled(String featureKey, bool enabled) async {
+    await _prefs?.setBool('gemini_feat_$featureKey', enabled);
+  }
+
+  static String getBroadcastFrequency() {
+    return _prefs?.getString(keyBroadcastFrequency) ?? 'Daily Morning (10 AM)';
+  }
+
+  static Future<void> setBroadcastFrequency(String freq) async {
+    await _prefs?.setString(keyBroadcastFrequency, freq);
+  }
+
+  static int getLastBroadcastTimestamp() {
+    return _prefs?.getInt(keyLastBroadcastTimestamp) ?? 0;
+  }
+
+  static Future<void> setLastBroadcastTimestamp(int ts) async {
+    await _prefs?.setInt(keyLastBroadcastTimestamp, ts);
+  }
+
+  static int getLastSeenBroadcastTimestamp() {
+    return _prefs?.getInt(keyLastSeenBroadcastTimestamp) ?? 0;
+  }
+
+  static Future<void> setLastSeenBroadcastTimestamp(int ts) async {
+    await _prefs?.setInt(keyLastSeenBroadcastTimestamp, ts);
   }
 
   // ── Standard catalogue ──

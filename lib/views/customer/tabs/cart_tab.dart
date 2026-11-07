@@ -12,7 +12,9 @@ import '../../../core/utils/whatsapp_helper.dart';
 import '../../../models/order_model.dart';
 import '../../../providers/cart_provider.dart';
 import '../../../providers/user_provider.dart';
+import '../../../services/analytics_service.dart';
 import '../../../services/notification_service.dart';
+import '../../../widgets/full_screen_image_viewer.dart';
 
 class CartTab extends StatefulWidget {
   final VoidCallback onBrowseHome;
@@ -119,6 +121,13 @@ class _CartTabState extends State<CartTab> {
         deliveryAddress: address,
       );
       await user.addOrder(newOrder);
+      await AnalyticsService.recordWhatsAppOrder(
+        customerName: name,
+        customerPhone: phone.isNotEmpty ? phone : user.profile.phone,
+        customerAddress: address,
+        totalAmount: totalAmount,
+        items: orderItems.cast(),
+      );
       await NotificationService.showOrderPlacedNotification(
         newOrder.id,
         totalAmount,
@@ -289,20 +298,33 @@ class _CartTabState extends State<CartTab> {
                     ),
                     child: Row(
                       children: [
-                        // Image or placeholder
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: context.isDark
-                                ? const Color(0xFF262626)
-                                : AppColors.surfaceVariant,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: _buildProductThumbnail(
-                              item.product.imageUrl,
+                        // Image or placeholder with pinch zoom
+                        GestureDetector(
+                          onTap: () {
+                            if (item.product.imageUrl.isNotEmpty) {
+                              FullScreenImageViewer.open(
+                                context,
+                                imageUrl: item.product.imageUrl,
+                                title: item.product.name,
+                                subtitle: '${item.product.category} • ${item.product.unit}',
+                                price: item.product.price,
+                              );
+                            }
+                          },
+                          child: Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: context.isDark
+                                  ? const Color(0xFF262626)
+                                  : AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: _buildProductThumbnail(
+                                item.product.imageUrl,
+                              ),
                             ),
                           ),
                         ),

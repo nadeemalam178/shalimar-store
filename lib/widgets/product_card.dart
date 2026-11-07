@@ -49,20 +49,31 @@ class ProductCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product Image with Hero animation & constrained cache
+              // Product Image with Hero animation & constrained cache (Tapping opens detail view)
               Expanded(
                 flex: 5,
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF252525) : AppColors.surfaceVariant.withValues(alpha: 0.6),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-                    child: Hero(
-                      tag: 'product_image_${product.id}',
-                      child: _buildProductImage(),
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProductDetailScreen(product: product),
+                      ),
+                    );
+                  },
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF252525) : AppColors.surfaceVariant.withValues(alpha: 0.6),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                      child: Hero(
+                        tag: 'product_image_${product.id}',
+                        child: _buildProductImage(),
+                      ),
                     ),
                   ),
                 ),
@@ -77,47 +88,57 @@ class ProductCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Unit badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF2C2C2C)
-                                  : (isOutOfStock ? Colors.grey.shade200 : Colors.grey.shade100),
-                              borderRadius: BorderRadius.circular(6),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProductDetailScreen(product: product),
                             ),
-                            child: Text(
-                              product.unit,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                          );
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Unit badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
                                 color: isDark
-                                    ? Colors.grey.shade400
-                                    : (isOutOfStock ? Colors.grey.shade500 : Colors.grey.shade700),
+                                    ? const Color(0xFF2C2C2C)
+                                    : (isOutOfStock ? Colors.grey.shade200 : Colors.grey.shade100),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                              maxLines: 1,
+                              child: Text(
+                                product.unit,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? Colors.grey.shade400
+                                      : (isOutOfStock ? Colors.grey.shade500 : Colors.grey.shade700),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            // Name
+                            Text(
+                              product.name,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? Colors.white
+                                    : (isOutOfStock ? Colors.grey.shade500 : AppColors.darkText),
+                                height: 1.2,
+                              ),
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          // Name
-                          Text(
-                            product.name,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? Colors.white
-                                  : (isOutOfStock ? Colors.grey.shade500 : AppColors.darkText),
-                              height: 1.2,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
 
                       // Price and Add / Quantity Button
@@ -278,24 +299,6 @@ class ProductCard extends StatelessWidget {
                 ),
               ),
             ),
-
-          // Tappable InkWell overlay for opening Detail View (covers entire card for both in-stock and out-of-stock items)
-          Positioned.fill(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(22),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ProductDetailScreen(product: product),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
 
           // Top Right Wishlist Heart Button
           Positioned(

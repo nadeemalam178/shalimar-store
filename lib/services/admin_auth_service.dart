@@ -56,20 +56,17 @@ class AdminAuthService {
     _prefs ??= await SharedPreferences.getInstance();
     final active = _prefs?.getBool(AppConstants.keyAdminSessionActive) ?? false;
     if (!active) return false;
-    final ts = _prefs?.getInt(AppConstants.keyAdminLoginTimestamp);
-    if (ts != null) {
-      final loginAt = DateTime.fromMillisecondsSinceEpoch(ts);
-      if (loginAt.isBefore(DateTime.now().subtract(const Duration(days: 7)))) {
-        await _prefs?.setBool(AppConstants.keyAdminSessionActive, false);
-        return false;
-      }
-    }
 
     // Verify Firebase Auth state: Must have an active user with owner email
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null &&
-          currentUser.email?.toLowerCase() != AppConstants.ownerEmail.toLowerCase()) {
+      if (currentUser == null) {
+        // Without active Firebase session, reject restoration
+        await _prefs?.setBool(AppConstants.keyAdminSessionActive, false);
+        _isAdminLoggedIn = false;
+        return false;
+      }
+      if (currentUser.email?.toLowerCase() != AppConstants.ownerEmail.toLowerCase()) {
         debugPrint('⚠️ [AdminAuthService] Stored session invalid: Firebase user is not owner');
         await _prefs?.setBool(AppConstants.keyAdminSessionActive, false);
         _isAdminLoggedIn = false;
@@ -78,7 +75,7 @@ class AdminAuthService {
     } catch (_) {}
 
     _isAdminLoggedIn = true;
-    debugPrint('✅ [AdminAuthService] Persistent admin session restored.');
+    debugPrint('✅ [AdminAuthService] Persistent admin session restored (no auto-logout).');
     return true;
   }
 

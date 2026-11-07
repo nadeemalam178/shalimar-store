@@ -10,6 +10,7 @@ import '../../providers/admin_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/catalogue_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../widgets/share_app_dialog.dart';
 import '../auth/login_screen.dart';
 
 class ProfileDialog extends StatefulWidget {
@@ -418,7 +419,60 @@ class _ProfileDialogState extends State<ProfileDialog> {
               ),
             ),
 
-            const SizedBox(height: 8),
+            // Share App with QR Code Button
+            InkWell(
+              onTap: () => ShareAppDialog.show(context),
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.12),
+                      AppColors.accent.withValues(alpha: 0.12),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.qr_code_rounded, size: 16, color: Colors.white),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Share App & QR Code',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: context.textPrimary,
+                            ),
+                          ),
+                          const Text(
+                            'Share latest version (arm64-v8a) with friends & family',
+                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
 
             // Store Helpline & Sign Out Row
             Row(

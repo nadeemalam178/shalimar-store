@@ -2,16 +2,16 @@
   <img src="assets/images/logo.png" width="140" alt="Shalimar Store Logo" />
 </p>
 
-<h1 align="center">🛒 Shalimar Store — Since 1988 (v4.0.0)</h1>
+<h1 align="center">🛒 Shalimar Store — Since 1988 (v4.1.0)</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v4.0.0-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-v4.1.0-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Gemini%20Pro-AI%20Hub%20Active-8E24AA?logo=google&logoColor=white" alt="Gemini Pro AI" />
   <img src="https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
   <img src="https://img.shields.io/badge/Supabase-Storage%20Images-3ECF8E?logo=supabase&logoColor=white" alt="Supabase Storage" />
-  <img src="https://img.shields.io/badge/Auth-Email%20%7C%20Google%20Sign--In%20Active-blue" alt="Authentication" />
+  <img src="https://img.shields.io/badge/QR%20Code-Instant%20App%20Sharing-blue" alt="QR Code" />
   <img src="https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Dart-3.13+-0175C2?logo=dart&logoColor=white" alt="Dart" />
-  <img src="https://img.shields.io/badge/Theme-AMOLED%20Dark%20%26%20Light-darkgreen" alt="AMOLED Theme" />
   <img src="https://img.shields.io/badge/OTA-arm64--v8a%20Direct%20OTA-brightgreen" alt="OTA Updates" />
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
 </p>
@@ -30,41 +30,39 @@ Established in **1988** by Mohammad Jamil, **Shalimar General Store** has been a
 
 ---
 
-## 🚀 What's New in v4.0.0 (Milestone Release)
+## 🚀 What's New in v4.1.0 (Major Release)
 
-### 🧹 Fresh Catalogue Directory & Clean Session Reset
-- Upgrading to v4.0.0 clears all obsolete local catalogue caches, providing an empty product directory so the store owner can add genuine store inventory freshly.
-- Cleanly resets and logs out all existing sessions (both admin and customer) so everyone starts on a clean slate.
+### ✨ Google Gemini Pro AI Hub
+- **Dedicated Step-by-Step Onboarding Guide:** Clear 4-step tutorial in the Admin Side Panel guiding the owner to acquire their Gemini Pro API Key directly from Google AI Studio.
+- **Live Connection Ping:** Verifies the API key in real time against Google's Generative Language API (`gemini-1.5-pro`) with clear status indicators.
+- **📸 Vision "Photo-to-Product" Auto-Fill:** 1-tap snap of any grocery item automatically fills product name, category, pack size/unit, MRP, and description.
+- **📢 Automated Customer Push Notifications:** Gemini crafts engaging Hinglish/English festive deals, daily staples discounts, and fresh stock alerts. Broadcasts are saved to Firestore `/broadcast_notifications` and trigger real-time heads-up push notifications on all registered customer devices.
+- **🧾 Parchi & WhatsApp List Decoder:** Seamless parsing of handwritten grocery chits and unstructured WhatsApp grocery lists.
 
-### 🛡️ Enterprise Security & Hardened Firestore Rules
-- **Owner-Only Product Writes:** `/products/{productId}` allows real-time public read, but write/delete permissions are strictly restricted to the verified Store Owner.
-- **Customer Privacy Protection:** Customer profiles (`/users/{userId}`) are private to their respective owners; unauthorized PII scraping and cross-user updates are blocked.
-- **Role Tampering Prevention:** Rules strictly prevent customers from elevating their account role to `'owner'`.
-- **Elimination of Hardcoded Passwords:** Removed all plaintext credentials from client source. Owner logs in authoritatively through Firebase Auth.
+### 📲 Instant App Sharing with QR Code (arm64-v8a)
+- Available in both **Admin Side Panel** and **Customer Profile & Settings**.
+- Generates an offline high-contrast QR code targeting the latest stable release: `https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-arm64-v8a-release.apk`.
+- Includes 1-tap **"Share via WhatsApp"** and **"Copy Download Link"** buttons.
 
-### 📸 Samsung Camera LMK Fix & Form Draft Recovery
-- Added `android:largeHeap="true"` and configured image compression (1024x1024 @ 80%) to prevent Low Memory Killer crashes on Samsung Galaxy devices.
-- Implemented persistent background form drafts: product name, price, MRP, unit, category, and description are safely preserved before opening camera and restored if Android reloads the app.
+### 📊 Unified Admin Side Panel (Drawer)
+- Consolidates Store Insights & CRM, Gemini Pro AI Hub, App Sharing QR, and Store Settings into 4 organized tabs, keeping the main dashboard clean and clutter-free.
+- **Customer CRM Directory:** Real-time customer list with 1-tap WhatsApp chat, direct phone call, and delivery addresses.
+- **WhatsApp Order Intelligence:** Tracks customer order submissions, estimated store revenue, and recent receipts.
+- **Batch Product Operations:** Long-press multi-select to batch delete or batch move products to any department.
 
-### 🗂️ Dynamic Category Management & Fallback
-- Added `ManageCategoriesDialog` allowing the store owner to add or remove departments directly.
-- Deleting an active category automatically reassigns all affected products to `"General"` with zero data loss.
+### 🔍 Full-Screen Pinch-to-Zoom Image Viewer Everywhere
+- Reusable `FullScreenImageViewer` modal supporting 1x to 5x pinch zoom and double-tap zoom across:
+  - Customer Product Detail screen (multi-image gallery)
+  - Customer Shopping Cart item thumbnails
+  - Store Heritage storefront photos
+  - Admin Dashboard 50x50 product thumbnails
+  - Add/Edit Product photo previews
 
-### ⚖️ Standardized Kirana Pack Sizes
-- Added standardized unit dropdown (`1 kg`, `500 gm`, `250 gm`, `1 Liter`, `500 ml`, `1 pc`, `1 Packet`, etc.) plus custom unit input for consistent cataloguing.
+### 🔒 Persistent Sessions (Zero Auto-Logout)
+- Active Admin and Customer sessions remain persistently logged in across app updates and daily usage until explicit sign-out.
 
-### 🔍 Hinglish & Colloquial Grocery Search
-- Built-in colloquial search dictionary maps common Indian terms (`tel`, `atta`, `dal`, `chawal`, `chai`, `sabun`) directly to English catalogue entries.
-
-### 📦 Out-of-Stock Card Tap Handling
-- Fixed touch interception on greyed-out out-of-stock items so customers can tap to view product details, pack size, and description.
-
-### 📲 1-Tap WhatsApp Product Promotional Sharing
-- Added 1-tap WhatsApp button in Admin Dashboard generating pre-formatted promotional messages with product title, price, savings, and store link.
-
-### 🖼️ Hardened Supabase Image Pipeline
-- Enforces 5 MB file size limit, MIME-type filtering, and binary magic-byte inspection (JPEG, PNG, WebP) to block non-image uploads.
-- Automatically cleans up image files in Supabase Storage when products are deleted.
+### 📝 Option A Description Integrity
+- Only custom-entered descriptions are shown in customer product details; empty descriptions remain cleanly hidden.
 
 ---
 

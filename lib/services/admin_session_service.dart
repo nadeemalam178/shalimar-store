@@ -37,14 +37,7 @@ class AdminSessionService {
 
   static bool hasValidLocalSession() {
     final active = _prefs?.getBool(AppConstants.keyAdminSessionActive) ?? false;
-    if (!active) return false;
-    final ts = _prefs?.getInt(AppConstants.keyAdminLoginTimestamp);
-    if (ts == null) return false;
-    final loginAt = DateTime.fromMillisecondsSinceEpoch(ts);
-    if (loginAt.isBefore(DateTime.now().subtract(sessionTtl))) {
-      return false;
-    }
-    return true;
+    return active;
   }
 
   static Future<void> saveLocalSession(String deviceId) async {

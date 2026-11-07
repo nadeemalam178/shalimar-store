@@ -100,7 +100,7 @@ class AuthService {
   }
 
   /// Sign In / Register with Google
-  static Future<UserModel> signInWithGoogle() async {
+  static Future<UserModel> signInWithGoogle({bool isSignUpMode = false}) async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn().timeout(
         const Duration(seconds: 45),
@@ -146,13 +146,64 @@ class AuthService {
         );
       }
 
-      final profile = await _fetchOrUpdateProfile(user, defaultProvider: 'google.com');
+      // Check existing profile in Firestore
+      final profile = await _fetchOrUpdateProfile(user, defaultProvider: 'google.com', isSignUpMode: isSignUpMode);
       debugPrint('✅ [AuthService] Google sign-in successful: ${profile.name}');
       return profile;
     } catch (e) {
       debugPrint('⚠️ [AuthService] Google Sign-In error: $e');
       rethrow;
     }
+  }
+
+  /// Update or complete customer profile with phone & address
+  static Future<UserModel> updateCustomerProfile({
+    required String uid,
+    required String name,
+    required String phone,
+    required String address,
+  }) async {
+    final cleanPhone = phone.trim();
+    final cleanAddress = address.trim();
+    final cleanName = name.trim();
+    final now = DateTime.now();
+
+    final docRef = _firestore.collection('users').doc(uid);
+    DocumentSnapshot<Map<String, dynamic>>? doc;
+    try {
+      doc = await docRef.get();
+    } catch (_) {}
+
+    UserModel userModel;
+    if (doc != null && doc.exists && doc.data() != null) {
+      final existing = UserModel.fromJson(doc.data()!, uid: uid);
+      userModel = existing.copyWith(
+        name: cleanName.isNotEmpty ? cleanName : existing.name,
+        phone: cleanPhone,
+        address: cleanAddress,
+        lastLoginAt: now,
+      );
+    } else {
+      userModel = UserModel(
+        uid: uid,
+        name: cleanName.isNotEmpty ? cleanName : (_auth.currentUser?.displayName ?? 'Customer'),
+        email: _auth.currentUser?.email ?? '',
+        phone: cleanPhone,
+        address: cleanAddress,
+        provider: 'google.com',
+        createdAt: now,
+        lastLoginAt: now,
+      );
+    }
+
+    await _syncUserToFirestore(userModel);
+    await StorageService.saveUserProfile(UserProfile(
+      username: userModel.name,
+      phone: userModel.phone,
+      address: userModel.address,
+    ));
+
+    return userModel;
   }
 
   /// Send official Firebase Password Reset email
@@ -174,7 +225,11 @@ class AuthService {
   }
 
   /// Helper to fetch existing profile from Firestore or initialize new one
-  static Future<UserModel> _fetchOrUpdateProfile(User user, {String defaultProvider = 'password'}) async {
+  static Future<UserModel> _fetchOrUpdateProfile(
+    User user, {
+    String defaultProvider = 'password',
+    bool isSignUpMode = false,
+  }) async {
     final now = DateTime.now();
     try {
       final docRef = _firestore.collection('users').doc(user.uid);
@@ -196,10 +251,20 @@ class AuthService {
         return updated;
       }
     } catch (e) {
-      debugPrint('ℹ️ [AuthService] Firestore read error or timeout, using direct profile: $e');
+      debugPrint('ℹ️ [AuthService] Firestore read error: $e');
     }
 
-    // New profile or offline fallback
+    // If user is on "Sign In" mode but account does NOT exist in Firestore:
+    if (!isSignUpMode) {
+      // Disallow direct sign-in without creating account first
+      await signOut();
+      throw FirebaseAuthException(
+        code: 'account-not-found',
+        message: 'No registered customer account found for this Google email. Please switch to "Create Account" to register your delivery address.',
+      );
+    }
+
+    // New profile in SignUp mode
     final newModel = UserModel(
       uid: user.uid,
       name: user.displayName?.isNotEmpty == true ? user.displayName! : 'Customer',
@@ -216,8 +281,8 @@ class AuthService {
       address: newModel.address,
     ));
 
-    // Sync to Firestore without blocking navigation
-    _syncUserToFirestore(newModel);
+    // Sync to Firestore
+    await _syncUserToFirestore(newModel);
 
     return newModel;
   }

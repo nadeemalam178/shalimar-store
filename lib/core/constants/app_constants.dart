@@ -1,6 +1,6 @@
 class AppConstants {
   static const String appName = 'Shalimar Store';
-  static const String appVersion = 'v4.0.0';
+  static const String appVersion = 'v4.1.0';
   static const String appTagline = 'Since 1988 • Quality & Trust';
   static const String ownerPhone = '7488151683';
   static const String ownerWhatsApp = '917488151683';

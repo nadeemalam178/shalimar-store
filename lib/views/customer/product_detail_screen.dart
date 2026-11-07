@@ -9,6 +9,7 @@ import '../../providers/cart_provider.dart';
 import '../../providers/catalogue_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/notification_service.dart';
+import '../../widgets/full_screen_image_viewer.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -256,24 +257,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 18),
-
-                  // Product Description
-                  const Text(
-                    'Product Details',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    product.description.isNotEmpty
-                        ? product.description
-                        : 'Authentic high-purity ${product.name} sourced directly for daily kitchen and household essentials. Inspected and distributed by Shalimar Store, Alamganj, Ashok Raj Path, Patna.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.5,
-                      color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                  // Product Description (Only rendered if owner provided a custom description)
+                  if (product.description.trim().isNotEmpty) ...[
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Product Details',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     ),
-                  ),
+                    const SizedBox(height: 6),
+                    Text(
+                      product.description.trim(),
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -325,13 +325,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             onPageChanged: (idx) => setState(() => _activeImageIndex = idx),
             itemBuilder: (context, idx) {
               final imgUrl = images[idx];
-              return Container(
-                width: double.infinity,
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                child: Center(
-                  child: Hero(
-                    tag: idx == 0 ? 'product_image_${widget.product.id}' : 'gallery_image_${widget.product.id}_$idx',
-                    child: _buildConstrainedImage(imgUrl),
+              final heroTag = idx == 0 ? 'product_image_${widget.product.id}' : 'gallery_image_${widget.product.id}_$idx';
+              return InkWell(
+                onTap: () {
+                  FullScreenImageViewer.open(
+                    context,
+                    imageUrl: imgUrl,
+                    title: widget.product.name,
+                    subtitle: '${widget.product.category} • ${widget.product.unit}',
+                    price: widget.product.price,
+                    heroTag: heroTag,
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  child: Center(
+                    child: Hero(
+                      tag: heroTag,
+                      child: _buildConstrainedImage(imgUrl),
+                    ),
                   ),
                 ),
               );

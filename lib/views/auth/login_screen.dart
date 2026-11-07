@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/theme_extensions.dart';
+import '../../models/user_model.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/admin_auth_service.dart';
@@ -32,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
 
   @override
   void dispose() {
@@ -39,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -58,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text,
           password: _passwordController.text,
           phone: _phoneController.text,
+          address: _addressController.text,
         );
         userProvider.setCurrentUser(userModel);
       } else {
@@ -126,7 +130,17 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // Ensure clean customer session
       await context.read<AdminProvider>().logout();
-      final userModel = await AuthService.signInWithGoogle();
+      final userModel = await AuthService.signInWithGoogle(isSignUpMode: _isSignUp);
+
+      // If user profile is missing mandatory delivery details (phone/address), prompt completion modal
+      if (userModel.phone.trim().isEmpty || userModel.address.trim().isEmpty) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          await _showCompleteProfileSheet(userModel);
+          return;
+        }
+      }
+
       userProvider.setCurrentUser(userModel);
 
       if (mounted) {
@@ -135,7 +149,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } on FirebaseAuthException catch (e) {
-      if (e.code != 'canceled') {
+      if (e.code == 'account-not-found') {
+        _showNoAccountFoundDialog();
+      } else if (e.code != 'canceled') {
         _showErrorSnackBar(e.message ?? 'Google Sign-In failed.');
       }
     } on PlatformException catch (e) {
@@ -147,7 +163,9 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       final errStr = e.toString().toLowerCase();
-      if (errStr.contains('10') || errStr.contains('sign_in_failed') || errStr.contains('apiexception')) {
+      if (errStr.contains('account-not-found')) {
+        _showNoAccountFoundDialog();
+      } else if (errStr.contains('10') || errStr.contains('sign_in_failed') || errStr.contains('apiexception')) {
         _showGoogleConfigNoticeDialog();
       } else {
         _showErrorSnackBar('Google Sign-In error: $e');
@@ -155,6 +173,223 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showNoAccountFoundDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: context.surfaceColor,
+        title: Row(
+          children: [
+            const Icon(Icons.person_add_alt_1_rounded, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              'Account Not Found',
+              style: TextStyle(color: context.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          'No registered customer account was found for this Google email.\n\nPlease switch to "Create Account" first to register your mobile number and delivery address.',
+          style: TextStyle(color: context.textSecondary, fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() => _isSignUp = true);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Create Account'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showCompleteProfileSheet(UserModel userModel) async {
+    final phoneCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool saving = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: context.surfaceColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.local_shipping_rounded, color: AppColors.primary, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Complete Delivery Details',
+                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: context.textPrimary),
+                          ),
+                          Text(
+                            'Required for grocery order delivery in Patna',
+                            style: TextStyle(fontSize: 11, color: context.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                TextFormField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  style: TextStyle(color: context.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Mobile / WhatsApp Number *',
+                    hintText: '10-digit mobile number',
+                    prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.primary),
+                    prefixText: '+91 ',
+                    counterText: '',
+                    filled: true,
+                    fillColor: context.inputFill,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Please enter 10-digit mobile number';
+                    }
+                    if (!RegExp(r'^[0-9]{10}$').hasMatch(val.trim())) {
+                      return 'Please enter a valid 10-digit mobile number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: addressCtrl,
+                  keyboardType: TextInputType.streetAddress,
+                  maxLines: 2,
+                  style: TextStyle(color: context.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Delivery Address & Landmark *',
+                    hintText: 'e.g. Near Alam Ganj Chowk, Ashok Rajpath, Patna',
+                    prefixIcon: const Icon(Icons.location_on_outlined, color: AppColors.primary),
+                    filled: true,
+                    fillColor: context.inputFill,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Please enter complete delivery address';
+                    }
+                    if (val.trim().length < 6) {
+                      return 'Address should include house/shop info and landmark';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: saving
+                            ? null
+                            : () async {
+                                await AuthService.signOut();
+                                if (ctx.mounted) Navigator.pop(ctx);
+                              },
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: saving
+                            ? null
+                            : () async {
+                                if (!formKey.currentState!.validate()) return;
+                                setSheetState(() => saving = true);
+                                try {
+                                  final updated = await AuthService.updateCustomerProfile(
+                                    uid: userModel.uid,
+                                    name: userModel.name,
+                                    phone: phoneCtrl.text,
+                                    address: addressCtrl.text,
+                                  );
+                                  if (ctx.mounted && mounted) {
+                                    final nav = Navigator.of(context);
+                                    context.read<UserProvider>().setCurrentUser(updated);
+                                    Navigator.pop(ctx);
+                                    nav.pushReplacement(
+                                      MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+                                    );
+                                  }
+                                } catch (e) {
+                                  setSheetState(() => saving = false);
+                                  _showErrorSnackBar('Failed to save profile: $e');
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: saving
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Text('Save & Continue', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _showGoogleConfigNoticeDialog() {
@@ -560,15 +795,55 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextFormField(
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
+                            maxLength: 10,
                             style: TextStyle(color: context.textPrimary),
                             decoration: InputDecoration(
-                              labelText: 'Phone / WhatsApp (Optional)',
-                              hintText: 'For WhatsApp delivery updates',
+                              labelText: 'Mobile / WhatsApp Number *',
+                              hintText: '10-digit mobile number',
                               prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.primary),
+                              prefixText: '+91 ',
+                              counterText: '',
                               filled: true,
                               fillColor: context.inputFill,
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                             ),
+                            validator: (val) {
+                              if (_isSignUp) {
+                                if (val == null || val.trim().isEmpty) {
+                                  return 'Please enter your 10-digit mobile number';
+                                }
+                                if (!RegExp(r'^[0-9]{10}$').hasMatch(val.trim())) {
+                                  return 'Please enter a valid 10-digit mobile number';
+                                }
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          TextFormField(
+                            controller: _addressController,
+                            keyboardType: TextInputType.streetAddress,
+                            maxLines: 2,
+                            style: TextStyle(color: context.textPrimary),
+                            decoration: InputDecoration(
+                              labelText: 'Delivery Address & Landmark *',
+                              hintText: 'e.g. Near Alam Ganj Chowk, Ashok Rajpath, Patna',
+                              prefixIcon: const Icon(Icons.location_on_outlined, color: AppColors.primary),
+                              filled: true,
+                              fillColor: context.inputFill,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            validator: (val) {
+                              if (_isSignUp) {
+                                if (val == null || val.trim().isEmpty) {
+                                  return 'Please enter complete delivery address';
+                                }
+                                if (val.trim().length < 6) {
+                                  return 'Please include house/shop info and landmark';
+                                }
+                              }
+                              return null;
+                            },
                           ),
                         ],
 

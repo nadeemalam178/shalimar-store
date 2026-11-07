@@ -18,7 +18,7 @@ class SupabaseStorageService {
     if (_initialized) return;
     await Supabase.initialize(
       url: url,
-      anonKey: anonKey,
+      publishableKey: anonKey,
     );
     _initialized = true;
     debugPrint('✅ [SupabaseStorage] Initialized with 5MB validation');
