@@ -16,32 +16,41 @@ class AdminProvider with ChangeNotifier {
     if (await AdminAuthService.restoreSession()) {
       _isLoggedIn = true;
       _isAdminMode = true;
-      await AdminAuthService.ensureOwnerFirebaseSession();
       _startSessionMonitoring();
     }
   }
 
   Future<bool> login(String id, String password) async {
-    if (!AdminAuthService.authenticate(id, password)) {
+    // 1. Authoritative verification through Firebase Auth using entered credentials
+    final authResult = await AdminAuthService.loginWithFirebaseCredentials(id, password);
+    if (!authResult.isSuccess) {
+      _sessionConflictMessage = authResult.errorMessage;
+      notifyListeners();
       return false;
     }
 
-    // Single-Admin Enforcement: Prevent simultaneous logins
-    final conflict = await AdminSessionService.checkExistingActiveSession();
-    if (conflict != null) {
-      _sessionConflictMessage = conflict;
-      notifyListeners();
-      return false;
+    // 2. Single-Admin Enforcement (Online only)
+    if (!authResult.isOffline) {
+      final conflict = await AdminSessionService.checkExistingActiveSession();
+      if (conflict != null) {
+        _sessionConflictMessage = conflict;
+        notifyListeners();
+        return false;
+      }
     }
 
     _isLoggedIn = true;
     _isAdminMode = true;
     _sessionConflictMessage = null;
-    await AdminAuthService.ensureOwnerFirebaseSession();
+
     final deviceId = await AdminSessionService.getOrCreateDeviceId();
     await AdminSessionService.saveLocalSession(deviceId);
-    await AdminSessionService.claimSession();
-    _startSessionMonitoring();
+
+    if (!authResult.isOffline) {
+      await AdminSessionService.claimSession();
+      _startSessionMonitoring();
+    }
+
     notifyListeners();
     return true;
   }

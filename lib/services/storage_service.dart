@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +9,7 @@ import '../models/cart_item.dart';
 import '../models/order_model.dart';
 import '../models/product.dart';
 import '../models/user_profile.dart';
+import 'product_draft_service.dart';
 
 class StorageService {
   static SharedPreferences? _prefs;
@@ -15,28 +17,35 @@ class StorageService {
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
 
-    // ── One-time clean auth session reset for v3.4.4 update ──
-    // Ensures existing test sessions are cleanly cleared so Owner logs in via Owner Portal
-    // and Customer logs in via Customer Auth with zero session contamination.
-    final hasResetSession = _prefs?.getBool('session_clean_reset_v344') ?? false;
-    if (!hasResetSession) {
+    // ── v4.0.0 Clean Reset: Clear Product Directory & Log Out Every Session ──
+    // Clears the product catalogue cache so the Owner can add real store products freshly,
+    // and cleanly logs out all admin and customer sessions for a fresh start after updating.
+    final hasResetV4 = _prefs?.getBool('v4_clean_reset_applied') ?? false;
+    final storedVersion = _prefs?.getString('app_version');
+    final currentVersion = AppConstants.appVersion;
+
+    if (!hasResetV4 || (storedVersion != null && storedVersion != currentVersion)) {
+      // 1. Clear product catalogue and custom categories cache
+      await clearCatalogueCache();
+
+      // 2. Clear any lingering form drafts
+      await ProductDraftService.clearDraft();
+
+      // 3. Log out Admin session
       await _prefs?.setBool(AppConstants.keyAdminSessionActive, false);
       await _prefs?.remove(AppConstants.keyAdminLoginTimestamp);
       await _prefs?.remove(AppConstants.keyAdminDeviceId);
+
+      // 4. Log out Customer profile & Firebase Auth
       await _prefs?.remove(AppConstants.keyUsername);
-      await _prefs?.setBool('session_clean_reset_v344', true);
-      debugPrint('🧹 [StorageService] One-time session clean reset applied for v3.4.4');
+      try {
+        await FirebaseAuth.instance.signOut();
+      } catch (_) {}
+
+      await _prefs?.setBool('v4_clean_reset_applied', true);
+      debugPrint('🧹 [StorageService] v4.0.0 Update: Cleared product catalogue and logged out all sessions.');
     }
 
-    // ── Clear only obsolete catalogue cache on app version update ──
-    // Preserves cart data, favorites, user profile, past orders,
-    // onboarding state, and authentication tokens.
-    final storedVersion = _prefs?.getString('app_version');
-    final currentVersion = AppConstants.appVersion;
-    if (storedVersion != null && storedVersion != currentVersion) {
-      await clearCatalogueCache();
-      debugPrint('🧹 [StorageService] Cleared obsolete catalogue cache: $storedVersion → $currentVersion (User & auth preserved)');
-    }
     await _prefs?.setString('app_version', currentVersion);
   }
 

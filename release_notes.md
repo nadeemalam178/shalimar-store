@@ -1,37 +1,45 @@
-# 🛒 Shalimar Store v3.4.5 Release Notes
+# 🛒 Shalimar Store v4.0.0 Release Notes
 
 **Shalimar Store (Est. 1988) — Official Mobile Application**  
 *Serving Trust, Quality & Purity on Ashok Raj Path, Alamganj, Patna — 800007, Bihar*
 
 ---
 
-## 🚀 What's New in Version 3.4.5
+## 🚀 What's New in Version 4.0.0 (Milestone Release)
 
-### 🚫 Complete Removal of Dummy Catalog Data
-- Removed the automatic fallback that restored the 24 demo Kirana items from local assets.
-- The app now strictly mirrors the live Cloud inventory: what the owner enters is what everyone sees, with zero ghost items.
+### 🧹 Fresh Catalogue Directory & Clean Session Reset
+- Upgrading to v4.0.0 clears all cached catalogue and category items, providing a completely fresh, empty directory so the store owner can add genuine store products from scratch.
+- Cleanly logs out all existing admin and customer sessions so everyone starts on a clean slate.
 
-### 🖼️ Seamless Supabase Photo Uploads
-- Resolved the image upload flow so newly captured/picked product images upload directly to Supabase Storage before updating Firestore.
-- Public image URLs load on both Admin and Customer devices immediately.
+### 🛡️ Production Security Hardening
+- **Strict Owner-Only Product Writes:** `/products/{productId}` in Firestore now strictly requires `isOwner()` credentials (`nadeemalam178@gmail.com`). Public writes are completely closed.
+- **Customer Privacy:** Customer documents (`/users/{userId}`) are private to their respective UID and the Store Owner. PII scraping and cross-user updates are blocked.
+- **Role Elevation Prevention:** Customers cannot modify or elevate their account role to `'owner'`.
+- **Eliminated Plaintext Passwords:** Removed all hardcoded credentials from the app binary; owner logs in authoritatively through Firebase Auth.
 
-### 🎨 Out-of-Stock Rendering & Visual Glitch Fix
-- Fixed the Flutter render tree issue where marking an item "Out of Stock" caused other product cards to lose their background colors or text data.
-- Out of stock now cleanly dims the product without breaking UI layout or adjacent items.
+### 📸 Samsung Camera LMK Crash Fix & Form Draft Recovery
+- Added `android:largeHeap="true"` and configured 1024x1024 @ 80% compression to prevent Android Low Memory Killer reloads on Samsung Galaxy devices.
+- Added background form draft persistence for product title, price, MRP, unit, category, and description so typed text is never lost when taking photos.
 
-### 🔔 Smart Customer-Only Stock Notifications
-- Store owners no longer receive local notifications when changing stock states in the Admin Dashboard.
-- Customer phones receive restock and out-of-stock alerts only if the item is in their **Cart**, **Favorites**, or restock alerts.
+### 🗂️ Dynamic Category Management
+- Added `ManageCategoriesDialog` in Admin Dashboard to create or delete categories on the fly.
+- Deleting a category automatically and safely reassigns all affected products to `"General"`.
 
-### 👑 Streamlined Owner Experience
-- Logging in as Store Owner bypasses customer registration straight into Admin Management.
-- Dedicated "Switch to Customer View" button lets the owner preview the store with `"Welcome, Owner 👑"`.
-- Regular customers will never see an "Owner" button or admin trigger.
+### ⚖️ Standardized Pack-Size Dropdown
+- Unified pack-size dropdown (`1 kg`, `500 gm`, `250 gm`, `1 Liter`, `500 ml`, `1 pc`, `1 Packet`, etc.) plus custom unit input.
 
-### 🛡️ Security Hardening
-- Plaintext password fallback strings have been purged from the client source code.
-- Admin authentication is verified using SHA-256 cryptographic hashes.
-- Single-admin enforcement prevents multiple simultaneous admin sessions using a 90-second heartbeat monitor.
+### 🔍 Hinglish & Colloquial Kirana Search
+- Native colloquial search matches Indian terms (`tel`, `atta`, `dal`, `chawal`, `chai`, `sabun`) to catalogue items.
+
+### 📦 Out-of-Stock Card Tap Handling
+- Fixed touch interception on greyed-out out-of-stock product cards so customers can tap to view details.
+
+### 📲 1-Tap WhatsApp Promotional Sharing
+- Added 1-tap WhatsApp sharing directly from Admin Dashboard with formatted pricing, savings, and store link.
+
+### 🖼️ Hardened Supabase Image Pipeline
+- Enforces 5 MB file size limit, MIME-type filtering, and binary magic-byte inspection (JPEG, PNG, WebP) to block non-image uploads.
+- Automatically cleans up image files in Supabase Storage when products are deleted.
 
 ---
 

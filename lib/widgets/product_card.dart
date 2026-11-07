@@ -242,7 +242,44 @@ class ProductCard extends StatelessWidget {
             ],
           ),
 
-          // Tappable InkWell overlay for opening Detail View
+          // Out Of Stock Centered Ribbon (Wrapped in IgnorePointer so tap passes through to InkWell)
+          if (isOutOfStock)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF424242).withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'OUT OF STOCK',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // Tappable InkWell overlay for opening Detail View (covers entire card for both in-stock and out-of-stock items)
           Positioned.fill(
             child: Material(
               color: Colors.transparent,
@@ -259,66 +296,6 @@ class ProductCard extends StatelessWidget {
               ),
             ),
           ),
-
-          // Top Left Discount Badge (Only if in stock)
-          if (!isOutOfStock && product.discountPercent > 0)
-            Positioned(
-              top: 8,
-              left: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${product.discountPercent.toInt()}% OFF',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-            ),
-
-          // Out Of Stock Centered Ribbon
-          if (isOutOfStock)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF424242).withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                    child: const Text(
-                      'OUT OF STOCK',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
 
           // Top Right Wishlist Heart Button
           Positioned(

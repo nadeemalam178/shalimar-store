@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,6 +9,7 @@ import '../../core/theme/theme_extensions.dart';
 import '../../models/product.dart';
 import '../../providers/catalogue_provider.dart';
 import '../../services/image_upload_service.dart';
+import '../../services/product_draft_service.dart';
 
 class AddEditProductDialog extends StatefulWidget {
   final Product? productToEdit;
@@ -32,19 +33,38 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   String? _localImagePath;
   bool _showUrlField = false;
   bool _isSaving = false;
+  bool _hasRestoredDraft = false;
+  bool _isInitializing = false;
+  Timer? _draftDebounce;
 
-  final List<String> _commonCategories = [
-    'Atta, Rice & Grains',
-    'Oils & Ghee',
-    'Dals & Pulses',
-    'Spices & Masale',
-    'Dairy & Breakfast',
-    'Snacks & Biscuits',
-    'Beverages & Tea',
-    'Cleaning & Household',
-    'Personal Care',
-    'General',
+  final List<String> _standardUnits = [
+    '1 kg',
+    '500 gm',
+    '250 gm',
+    '100 gm',
+    '50 gm',
+    '2 kg',
+    '5 kg',
+    '10 kg',
+    '1 Liter',
+    '500 ml',
+    '200 ml',
+    '100 ml',
+    '2 Liter',
+    '5 Liter',
+    '1 pc',
+    '1 Packet',
+    'Pack of 2',
+    'Pack of 4',
+    'Pack of 6',
+    '1 Box',
+    '1 Strip',
+    '1 Bottle',
+    '1 Can',
   ];
+
+  late String _selectedUnit;
+  bool _isCustomUnit = false;
 
   @override
   void initState() {
@@ -53,24 +73,245 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     _nameCtrl = TextEditingController(text: p?.name ?? '');
     _priceCtrl = TextEditingController(text: p != null ? p.price.toString() : '');
     _mrpCtrl = TextEditingController(text: p != null ? p.mrp.toString() : '');
-    _unitCtrl = TextEditingController(text: p?.unit ?? '1 kg');
+    final initialUnit = p?.unit ?? '1 kg';
+    _unitCtrl = TextEditingController(text: initialUnit);
     _imageCtrl = TextEditingController(text: p?.imageUrl ?? '');
     _descCtrl = TextEditingController(text: p?.description ?? '');
-    _category = p?.category ?? 'Atta, Rice & Grains';
-    if (!_commonCategories.contains(_category)) {
-      _commonCategories.insert(0, _category);
-    }
+    _category = p?.category ?? 'General';
     _inStock = p?.inStock ?? true;
+
+    if (_standardUnits.contains(initialUnit)) {
+      _selectedUnit = initialUnit;
+      _isCustomUnit = false;
+    } else {
+      _selectedUnit = 'Custom';
+      _isCustomUnit = true;
+    }
 
     if (p != null && p.imageUrl.isNotEmpty) {
       if (File(p.imageUrl).existsSync()) {
         _localImagePath = p.imageUrl;
       }
     }
+
+    _nameCtrl.addListener(_onFieldChanged);
+    _priceCtrl.addListener(_onFieldChanged);
+    _mrpCtrl.addListener(_onFieldChanged);
+    _unitCtrl.addListener(_onFieldChanged);
+    _imageCtrl.addListener(_onFieldChanged);
+    _descCtrl.addListener(_onFieldChanged);
+
+    // Load any persisted draft (separate for New vs Edit) and recover lost camera image
+    _initDraftAndLostData();
+  }
+
+  void _onFieldChanged() {
+    if (_isInitializing) return;
+    _draftDebounce?.cancel();
+    _draftDebounce = Timer(const Duration(milliseconds: 350), () {
+      _saveCurrentDraft();
+    });
+  }
+
+  Future<void> _initDraftAndLostData() async {
+    _isInitializing = true;
+    try {
+      // 1. Check for saved draft (separate for New vs Edit product)
+      final draft = await ProductDraftService.loadDraft(
+        productId: widget.productToEdit?.id,
+      );
+      if (draft != null && !draft.isEmpty && mounted) {
+        setState(() {
+          if (draft.name.isNotEmpty) _nameCtrl.text = draft.name;
+          if (draft.price.isNotEmpty) _priceCtrl.text = draft.price;
+          if (draft.mrp.isNotEmpty) _mrpCtrl.text = draft.mrp;
+          if (draft.unit.isNotEmpty) {
+            _unitCtrl.text = draft.unit;
+            if (_standardUnits.contains(draft.unit)) {
+              _selectedUnit = draft.unit;
+              _isCustomUnit = false;
+            } else {
+              _selectedUnit = 'Custom';
+              _isCustomUnit = true;
+            }
+          }
+          if (draft.category.isNotEmpty) _category = draft.category;
+          _descCtrl.text = draft.description;
+          _inStock = draft.inStock;
+          if (draft.localImagePath != null && File(draft.localImagePath!).existsSync()) {
+            _localImagePath = draft.localImagePath;
+            _imageCtrl.text = draft.localImagePath!;
+          } else if (draft.imageUrl != null && draft.imageUrl!.isNotEmpty) {
+            _imageCtrl.text = draft.imageUrl!;
+            if (draft.imageUrl!.startsWith('http')) {
+              _showUrlField = true;
+            }
+          }
+          _hasRestoredDraft = true;
+        });
+      }
+
+      // 2. Check for lost camera image on Android activity recreation
+      await _retrieveLostImage();
+    } finally {
+      _isInitializing = false;
+    }
+  }
+
+  Future<void> _retrieveLostImage() async {
+    try {
+      final picker = ImagePicker();
+      final response = await picker.retrieveLostData();
+      if (response.isEmpty) return;
+      final file = response.file;
+      if (file != null && mounted) {
+        setState(() {
+          _localImagePath = file.path;
+          _imageCtrl.text = file.path;
+        });
+        await _saveCurrentDraft();
+      }
+    } catch (e) {
+      debugPrint('ℹ️ [AddEditProduct] retrieveLostData check: $e');
+    }
+  }
+
+  Future<void> _saveCurrentDraft() async {
+    if (!mounted) return;
+
+    // Avoid saving if completely empty new product form
+    if (widget.productToEdit == null &&
+        _nameCtrl.text.trim().isEmpty &&
+        _priceCtrl.text.trim().isEmpty &&
+        _mrpCtrl.text.trim().isEmpty &&
+        _descCtrl.text.trim().isEmpty &&
+        _localImagePath == null &&
+        _imageCtrl.text.trim().isEmpty) {
+      return;
+    }
+
+    final draft = ProductDraft(
+      productId: widget.productToEdit?.id,
+      name: _nameCtrl.text,
+      category: _category,
+      price: _priceCtrl.text,
+      mrp: _mrpCtrl.text,
+      unit: _unitCtrl.text,
+      isCustomUnit: _isCustomUnit,
+      description: _descCtrl.text,
+      inStock: _inStock,
+      localImagePath: _localImagePath,
+      imageUrl: _imageCtrl.text,
+      lastModified: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    await ProductDraftService.saveDraft(draft);
+  }
+
+  Future<void> _discardDraftAndReset() async {
+    await ProductDraftService.clearDraft(productId: widget.productToEdit?.id);
+    final p = widget.productToEdit;
+    setState(() {
+      _nameCtrl.text = p?.name ?? '';
+      _priceCtrl.text = p != null ? p.price.toString() : '';
+      _mrpCtrl.text = p != null ? p.mrp.toString() : '';
+      final initialUnit = p?.unit ?? '1 kg';
+      _unitCtrl.text = initialUnit;
+      if (_standardUnits.contains(initialUnit)) {
+        _selectedUnit = initialUnit;
+        _isCustomUnit = false;
+      } else {
+        _selectedUnit = 'Custom';
+        _isCustomUnit = true;
+      }
+      _imageCtrl.text = p?.imageUrl ?? '';
+      _descCtrl.text = p?.description ?? '';
+      _category = p?.category ?? 'General';
+      _inStock = p?.inStock ?? true;
+      if (p != null && p.imageUrl.isNotEmpty && File(p.imageUrl).existsSync()) {
+        _localImagePath = p.imageUrl;
+      } else {
+        _localImagePath = null;
+      }
+      _hasRestoredDraft = false;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Draft discarded. Form reset to original.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  bool _hasUnsavedChanges() {
+    final p = widget.productToEdit;
+    if (p == null) {
+      return _nameCtrl.text.trim().isNotEmpty ||
+          _priceCtrl.text.trim().isNotEmpty ||
+          _mrpCtrl.text.trim().isNotEmpty ||
+          _descCtrl.text.trim().isNotEmpty ||
+          _localImagePath != null ||
+          (_imageCtrl.text.trim().isNotEmpty && !_imageCtrl.text.startsWith('http'));
+    } else {
+      return _nameCtrl.text.trim() != p.name ||
+          _priceCtrl.text.trim() != (p.price == 0 ? '' : p.price.toString()) ||
+          _mrpCtrl.text.trim() != (p.mrp == 0 ? '' : p.mrp.toString()) ||
+          _unitCtrl.text.trim() != p.unit ||
+          _category != p.category ||
+          _inStock != p.inStock ||
+          _descCtrl.text.trim() != p.description ||
+          (_localImagePath != null && _localImagePath != p.imageUrl) ||
+          _imageCtrl.text.trim() != p.imageUrl;
+    }
+  }
+
+  Future<bool> _showDiscardConfirmationDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Unsaved Changes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        content: const Text(
+          'You have unsaved changes in this form. Would you like to keep this draft for later or discard it?',
+          style: TextStyle(fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Stay'),
+          ),
+          OutlinedButton(
+            onPressed: () async {
+              await _saveCurrentDraft();
+              if (ctx.mounted) Navigator.pop(ctx, true);
+            },
+            child: const Text('Keep Draft'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () async {
+              await ProductDraftService.clearDraft(productId: widget.productToEdit?.id);
+              if (ctx.mounted) Navigator.pop(ctx, true);
+            },
+            child: const Text('Discard', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 
   @override
   void dispose() {
+    _draftDebounce?.cancel();
+    _nameCtrl.removeListener(_onFieldChanged);
+    _priceCtrl.removeListener(_onFieldChanged);
+    _mrpCtrl.removeListener(_onFieldChanged);
+    _unitCtrl.removeListener(_onFieldChanged);
+    _imageCtrl.removeListener(_onFieldChanged);
+    _descCtrl.removeListener(_onFieldChanged);
+
     _nameCtrl.dispose();
     _priceCtrl.dispose();
     _mrpCtrl.dispose();
@@ -81,18 +322,25 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    // Immediately persist current draft before launching external camera/gallery activity
+    await _saveCurrentDraft();
+
     try {
       final picker = ImagePicker();
+      // On Samsung devices, requesting raw full 50MP/108MP camera capture exhausts RAM.
+      // Setting maxWidth: 1024, maxHeight: 1024, imageQuality: 80 keeps memory low and fast.
       final picked = await picker.pickImage(
         source: source,
-        imageQuality: 85,
+        imageQuality: 80,
         maxWidth: 1024,
+        maxHeight: 1024,
       );
-      if (picked != null) {
+      if (picked != null && mounted) {
         setState(() {
           _localImagePath = picked.path;
           _imageCtrl.text = picked.path;
         });
+        await _saveCurrentDraft();
       }
     } catch (e) {
       if (mounted) {
@@ -136,9 +384,31 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
 
           if (publicUrl != null && publicUrl.isNotEmpty) {
             finalImageUrl = publicUrl;
+          } else {
+            // Upload returned null or failed -> alert admin and do not save with unusable local path
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('⚠️ Image upload failed. Please check internet connection or storage permissions.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            setState(() => _isSaving = false);
+            return;
           }
         } catch (uploadErr) {
           debugPrint('⚠️ [AddEditProduct] Image upload to Supabase failed: $uploadErr');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('⚠️ Image upload failed: $uploadErr'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() => _isSaving = false);
+          return;
         }
       }
 
@@ -170,6 +440,9 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           ),
         );
       }
+
+      // Clear draft after successful add or update
+      await ProductDraftService.clearDraft(productId: widget.productToEdit?.id);
 
       if (mounted) {
         Navigator.pop(context);
@@ -318,57 +591,118 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     );
   }
 
+  Widget _buildRestoredDraftBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withAlpha(20),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withAlpha(60)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.history_rounded, size: 18, color: AppColors.primary),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Restored unsaved draft',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _discardDraftAndReset,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Discard Draft',
+              style: TextStyle(fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.productToEdit != null;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: context.surfaceColor,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
-          maxWidth: 480,
-        ),
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          color: context.surfaceColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: context.borderSubtle),
-        ),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    isEditing ? 'Edit Product' : 'Add New Product',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: context.textPrimary,
+    return PopScope(
+      canPop: !_hasUnsavedChanges(),
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _showDiscardConfirmationDialog();
+        if (shouldPop && context.mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: context.surfaceColor,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+            maxWidth: 480,
+          ),
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: context.surfaceColor,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: context.borderSubtle),
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEditing ? 'Edit Product' : 'Add New Product',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: context.textPrimary,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.close, color: context.textSecondary),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              Divider(height: 16, color: context.borderSubtle),
+                    IconButton(
+                      icon: Icon(Icons.close, color: context.textSecondary),
+                      onPressed: () async {
+                        if (_hasUnsavedChanges()) {
+                          final shouldPop = await _showDiscardConfirmationDialog();
+                          if (shouldPop && context.mounted) {
+                            Navigator.pop(context);
+                          }
+                        } else {
+                          Navigator.pop(context);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                Divider(height: 16, color: context.borderSubtle),
 
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Photo Capture & Upload Box
-                      _buildImagePreview(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Restored Draft Banner if recovered
+                        if (_hasRestoredDraft) _buildRestoredDraftBanner(),
+
+                        // Photo Capture & Upload Box
+                        _buildImagePreview(),
                       if (_showUrlField) ...[
                         const SizedBox(height: 10),
                         TextFormField(
@@ -393,15 +727,68 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Category Dropdown
-                      DropdownButtonFormField<String>(
-                        initialValue: _category,
-                        decoration: const InputDecoration(labelText: 'Category'),
-                        items: _commonCategories.map((c) {
-                          return DropdownMenuItem(value: c, child: Text(c));
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) setState(() => _category = val);
+                      // Category Dropdown (Dynamic from CatalogueProvider)
+                      Builder(
+                        builder: (context) {
+                          final catalogue = context.watch<CatalogueProvider>();
+                          final availableCats = catalogue.categories.where((c) => c != 'All').toList();
+                          if (!availableCats.contains('General')) availableCats.add('General');
+                          if (!availableCats.contains(_category) && _category.isNotEmpty) {
+                            availableCats.insert(0, _category);
+                          }
+
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: availableCats.contains(_category) ? _category : availableCats.first,
+                                  decoration: const InputDecoration(labelText: 'Category *'),
+                                  items: availableCats.map((c) {
+                                    return DropdownMenuItem(value: c, child: Text(c));
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    if (val != null) setState(() => _category = val);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+                                tooltip: 'Create New Category',
+                                onPressed: () {
+                                  final textCtrl = TextEditingController();
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      title: const Text('Add Category', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                      content: TextField(
+                                        controller: textCtrl,
+                                        autofocus: true,
+                                        textCapitalization: TextCapitalization.words,
+                                        decoration: const InputDecoration(labelText: 'Category Name'),
+                                      ),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            final name = textCtrl.text.trim();
+                                            if (name.isNotEmpty) {
+                                              await catalogue.addCategory(name);
+                                              setState(() => _category = name);
+                                              if (ctx.mounted) Navigator.pop(ctx);
+                                            }
+                                          },
+                                          child: const Text('Add'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
                         },
                       ),
                       const SizedBox(height: 12),
@@ -439,15 +826,49 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Pack Unit
-                      TextFormField(
-                        controller: _unitCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Pack Size / Unit *',
-                          hintText: 'e.g. 5 kg, 1 Liter, 500 gm, 1 pc',
-                        ),
-                        validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                      // Standardized Pack Size / Unit Dropdown
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: _isCustomUnit ? 'Custom' : _selectedUnit,
+                              decoration: const InputDecoration(labelText: 'Pack Size / Unit *'),
+                              items: [
+                                ..._standardUnits.map((u) => DropdownMenuItem(value: u, child: Text(u))),
+                                const DropdownMenuItem(value: 'Custom', child: Text('✍️ Custom Unit...')),
+                              ],
+                              onChanged: (val) {
+                                if (val == null) return;
+                                if (val == 'Custom') {
+                                  setState(() {
+                                    _selectedUnit = 'Custom';
+                                    _isCustomUnit = true;
+                                  });
+                                } else {
+                                  setState(() {
+                                    _selectedUnit = val;
+                                    _isCustomUnit = false;
+                                    _unitCtrl.text = val;
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ],
                       ),
+                      if (_isCustomUnit) ...[
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: _unitCtrl,
+                          autofocus: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Specify Custom Unit *',
+                            hintText: 'e.g. 750 ml, 1 Bundle, 1 Dozen',
+                          ),
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Please specify unit' : null,
+                        ),
+                      ],
                       const SizedBox(height: 12),
 
                       // Description
@@ -492,15 +913,18 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                   if (isEditing)
                     IconButton(
                       icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      onPressed: () {
-                        context.read<CatalogueProvider>().deleteProduct(widget.productToEdit!.id);
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Product deleted'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                      onPressed: () async {
+                        await ProductDraftService.clearDraft(productId: widget.productToEdit!.id);
+                        if (context.mounted) {
+                          context.read<CatalogueProvider>().deleteProduct(widget.productToEdit!.id);
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Product deleted'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       },
                     ),
                   Expanded(
@@ -521,6 +945,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

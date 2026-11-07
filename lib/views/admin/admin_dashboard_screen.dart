@@ -7,11 +7,13 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/theme_extensions.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/whatsapp_helper.dart';
 import '../../models/product.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/catalogue_provider.dart';
 import '../customer/customer_main_screen.dart';
 import 'add_edit_product_dialog.dart';
+import 'manage_categories_dialog.dart';
 import 'store_settings_dialog.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -178,6 +180,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ],
           ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.category_outlined),
+              tooltip: 'Manage Categories',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => const ManageCategoriesDialog(),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.settings_outlined),
               tooltip: 'Store Settings & Password',
@@ -435,33 +447,66 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       separatorBuilder: (_, _) => const SizedBox(width: 6),
                       itemBuilder: (context, index) {
                         if (index == catalogue.categories.length) {
-                          // "+ Add Category" Chip
-                          return ActionChip(
-                            avatar: const Icon(
-                              Icons.add,
-                              size: 16,
-                              color: AppColors.primary,
-                            ),
-                            label: const Text(
-                              'New Category',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
+                          // "+ Add Category" & "Manage" Chips
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ActionChip(
+                                avatar: const Icon(
+                                  Icons.add,
+                                  size: 16,
+                                  color: AppColors.primary,
+                                ),
+                                label: const Text(
+                                  'New Category',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.08,
+                                ),
+                                side: const BorderSide(
+                                  color: AppColors.primary,
+                                  width: 1,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                onPressed: () =>
+                                    _showAddCategoryDialog(context, catalogue),
                               ),
-                            ),
-                            backgroundColor: AppColors.primary.withValues(
-                              alpha: 0.08,
-                            ),
-                            side: const BorderSide(
-                              color: AppColors.primary,
-                              width: 1,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            onPressed: () =>
-                                _showAddCategoryDialog(context, catalogue),
+                              const SizedBox(width: 6),
+                              ActionChip(
+                                avatar: const Icon(
+                                  Icons.tune_rounded,
+                                  size: 16,
+                                  color: Colors.grey,
+                                ),
+                                label: const Text(
+                                  'Manage',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                backgroundColor: context.surfaceColor,
+                                side: BorderSide(
+                                  color: context.borderSubtle,
+                                  width: 1,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                onPressed: () => showDialog(
+                                  context: context,
+                                  builder: (_) => const ManageCategoriesDialog(),
+                                ),
+                              ),
+                            ],
                           );
                         }
 
@@ -714,20 +759,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ],
                             ),
 
-                            // Edit Button
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit_outlined,
-                                size: 20,
-                                color: Colors.grey,
-                              ),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (_) =>
-                                      AddEditProductDialog(productToEdit: item),
-                                );
-                              },
+                            // Edit & Share Action Buttons
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.share_outlined,
+                                    size: 19,
+                                    color: Color(0xFF25D366),
+                                  ),
+                                  tooltip: 'Share on WhatsApp',
+                                  onPressed: () {
+                                    WhatsAppHelper.shareProduct(
+                                      context: context,
+                                      name: item.name,
+                                      category: item.category,
+                                      price: item.price,
+                                      mrp: item.mrp,
+                                      unit: item.unit,
+                                      imageUrl: item.imageUrl,
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 20,
+                                    color: Colors.grey,
+                                  ),
+                                  tooltip: 'Edit Product Details',
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) =>
+                                          AddEditProductDialog(productToEdit: item),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                           ],
                         ),

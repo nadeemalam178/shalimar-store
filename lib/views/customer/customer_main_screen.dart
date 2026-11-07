@@ -155,12 +155,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
             // Right: Admin Portal Switch (ONLY visible when Store Owner is logged in)
             if (admin.isLoggedIn)
               InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
-                  );
-                },
+                onTap: _handleAdminSwitchTap,
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

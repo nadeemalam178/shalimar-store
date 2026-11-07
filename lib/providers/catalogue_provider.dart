@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../models/product.dart';
 import '../services/admin_auth_service.dart';
 import '../services/cloud_sync_service.dart';
+import '../services/image_upload_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
@@ -31,13 +32,60 @@ class CatalogueProvider with ChangeNotifier {
   }
 
   List<Product> get filteredProducts {
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) {
+      if (_selectedCategory == 'All') return _products;
+      return _products.where((p) => p.category == _selectedCategory).toList();
+    }
+
+    // Hinglish / colloquial translation map for common Kirana search terms
+    final Map<String, List<String>> synonyms = {
+      'atta': ['flour', 'wheat', 'gehu', 'chakki'],
+      'flour': ['atta', 'maida', 'suji'],
+      'tel': ['oil', 'mustard', 'sunflower', 'refined', 'sarson'],
+      'oil': ['tel', 'sarson', 'refined'],
+      'chawal': ['rice', 'basmati'],
+      'rice': ['chawal', 'basmati'],
+      'cheeni': ['sugar', 'sakkar'],
+      'sugar': ['cheeni', 'sakkar'],
+      'namak': ['salt', 'tata'],
+      'salt': ['namak'],
+      'dal': ['pulse', 'arhar', 'toor', 'chana', 'moong', 'urad', 'masoor'],
+      'dahi': ['curd', 'yogurt'],
+      'doodh': ['milk', 'amul'],
+      'chai': ['tea', 'patti'],
+      'tea': ['chai', 'patti'],
+      'haldi': ['turmeric', 'masala'],
+      'mirchi': ['chilli', 'chili', 'masala'],
+      'sabun': ['soap', 'detergent', 'surf', 'wash'],
+      'soap': ['sabun', 'bar', 'wash'],
+    };
+
+    final querySynonyms = synonyms[query] ?? [];
+
     return _products.where((item) {
       final matchesCategory = _selectedCategory == 'All' || item.category == _selectedCategory;
-      final matchesSearch = _searchQuery.isEmpty ||
-          item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          item.category.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          item.unit.toLowerCase().contains(_searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      if (!matchesCategory) return false;
+
+      final nameLower = item.name.toLowerCase();
+      final catLower = item.category.toLowerCase();
+      final unitLower = item.unit.toLowerCase();
+      final descLower = item.description.toLowerCase();
+
+      final directMatch = nameLower.contains(query) ||
+          catLower.contains(query) ||
+          unitLower.contains(query) ||
+          descLower.contains(query);
+
+      if (directMatch) return true;
+
+      for (final syn in querySynonyms) {
+        if (nameLower.contains(syn) || catLower.contains(syn) || descLower.contains(syn)) {
+          return true;
+        }
+      }
+
+      return false;
     }).toList();
   }
 
@@ -106,9 +154,33 @@ class CatalogueProvider with ChangeNotifier {
     }
   }
 
-  Future<void> removeCategory(String categoryName) async {
-    _customCategories.remove(categoryName.trim());
+  Future<void> removeCategory(String categoryName, {String fallbackCategory = 'General'}) async {
+    final clean = categoryName.trim();
+    if (clean.isEmpty || clean.toLowerCase() == 'all') return;
+
+    // Remove from custom categories list
+    _customCategories.remove(clean);
     await StorageService.saveCustomCategories(_customCategories);
+
+    // If any products belong to this category, reassign them to the fallback category
+    bool hadReassigned = false;
+    for (int i = 0; i < _products.length; i++) {
+      if (_products[i].category == clean) {
+        final updated = _products[i].copyWith(category: fallbackCategory);
+        _products[i] = updated;
+        hadReassigned = true;
+        unawaited(CloudSyncService.syncProductToCloud(updated));
+      }
+    }
+
+    if (hadReassigned) {
+      await StorageService.saveProducts(_products);
+    }
+
+    if (_selectedCategory == clean) {
+      _selectedCategory = 'All';
+    }
+
     notifyListeners();
   }
 
@@ -185,6 +257,8 @@ class CatalogueProvider with ChangeNotifier {
     await StorageService.saveProducts(_products);
     notifyListeners();
     await CloudSyncService.deleteProductFromCloud(productId);
+    // Asynchronously delete product image assets from Supabase Storage
+    unawaited(ImageUploadService.deleteProductImages(productId));
   }
 
   Future<void> restoreStandardCatalogue() async {

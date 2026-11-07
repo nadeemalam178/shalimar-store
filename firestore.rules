@@ -7,31 +7,46 @@ service cloud.firestore {
     }
 
     function isOwner() {
-      return isAuthenticated() && (
-        request.auth.token.email == 'nadeemalam178@gmail.com' ||
-        request.auth.token.email_verified == true
-      );
+      return isAuthenticated() &&
+        request.auth.token.email != null &&
+        request.auth.token.email == 'nadeemalam178@gmail.com';
     }
 
-    // Products: Open read & write so admin additions mirror in real-time to customer phones
+    function isOwnerOrSelf(userId) {
+      return isAuthenticated() && (request.auth.uid == userId || isOwner());
+    }
+
+    // Products: Open read for all customers & guests; writes restricted exclusively to Store Owner
     match /products/{productId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isOwner();
     }
 
-    // Customer Profiles: Read public, write authenticated
+    // Customer Profiles: Private to the authenticated user and Store Owner.
+    // Customers can never elevate their own role to 'owner'.
     match /users/{userId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
+      allow read: if isOwnerOrSelf(userId);
+
+      allow create: if isAuthenticated() &&
+        (request.auth.uid == userId || isOwner()) &&
+        (request.resource.data.role == 'customer' || isOwner());
+
+      allow update: if isOwnerOrSelf(userId) &&
+        (isOwner() || !('role' in request.resource.data) || request.resource.data.role == resource.data.role);
+
+      allow delete: if isOwnerOrSelf(userId);
     }
 
-    // Admin Session tracking & heartbeat
+    // Admin Session tracking & heartbeat: Read by authenticated users; write restricted to Store Owner
     match /admin_sessions/{document=**} {
-      allow read, write: if true;
+      allow read: if isAuthenticated();
+      allow write: if isOwner();
     }
 
+    // Default deny all other collections
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
+

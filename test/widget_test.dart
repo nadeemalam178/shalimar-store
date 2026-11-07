@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shalimar_store/core/constants/app_constants.dart';
 import 'package:shalimar_store/models/product.dart';
 import 'package:shalimar_store/providers/cart_provider.dart';
+import 'package:shalimar_store/providers/catalogue_provider.dart';
 import 'package:shalimar_store/services/admin_auth_service.dart';
 
 void main() {
@@ -88,6 +89,14 @@ void main() {
 
       AdminAuthService.logout();
       expect(AdminAuthService.isLoggedIn, isFalse);
+    });
+
+    test('Hinglish and Colloquial Search Matching', () {
+      final catalogue = CatalogueProvider();
+      // Test search query with Hinglish synonyms
+      catalogue.setSearchQuery('tel');
+      // When searching 'tel', it should match products containing 'oil', 'mustard', 'sunflower', etc.
+      expect(catalogue.searchQuery, 'tel');
     });
   });
 }

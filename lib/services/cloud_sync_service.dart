@@ -27,8 +27,6 @@ class CloudSyncService {
       return;
     }
 
-    bool hasSeenNonEmpty = false;
-
     try {
       _streamSub?.cancel();
       _streamSub = firestore.collection(_collectionPath).snapshots().listen((snapshot) {

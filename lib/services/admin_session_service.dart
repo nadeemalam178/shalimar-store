@@ -65,7 +65,7 @@ class AdminSessionService {
     if (!_firestoreReady) return;
     final deviceId = await getOrCreateDeviceId();
     try {
-      final doc = await FirebaseFirestore.instance.collection('admin_sessions').doc('active').get();
+      final doc = await FirebaseFirestore.instance.doc(_sessionDocPath).get();
       if (doc.exists && doc.data()?['deviceId'] == deviceId) {
         await doc.reference.delete();
       }
@@ -80,7 +80,7 @@ class AdminSessionService {
     if (!_firestoreReady) return null;
     try {
       final myDeviceId = await getOrCreateDeviceId();
-      final doc = await FirebaseFirestore.instance.collection('admin_sessions').doc('active').get();
+      final doc = await FirebaseFirestore.instance.doc(_sessionDocPath).get();
       if (!doc.exists) return null;
       final data = doc.data();
       if (data == null) return null;
@@ -108,7 +108,7 @@ class AdminSessionService {
     final deviceId = await getOrCreateDeviceId();
     if (!_firestoreReady) return true;
     try {
-      await FirebaseFirestore.instance.collection('admin_sessions').doc('active').set({
+      await FirebaseFirestore.instance.doc(_sessionDocPath).set({
         'deviceId': deviceId,
         'claimedAt': FieldValue.serverTimestamp(),
         'heartbeat': FieldValue.serverTimestamp(),
@@ -127,7 +127,7 @@ class AdminSessionService {
     _heartbeatTimer = Timer.periodic(heartbeatInterval, (_) async {
       try {
         final deviceId = await getOrCreateDeviceId();
-        final doc = await FirebaseFirestore.instance.collection('admin_sessions').doc('active').get();
+        final doc = await FirebaseFirestore.instance.doc(_sessionDocPath).get();
         if (doc.exists && doc.data()?['deviceId'] == deviceId) {
           await doc.reference.update({'heartbeat': FieldValue.serverTimestamp()});
         }
@@ -146,7 +146,7 @@ class AdminSessionService {
   static void listenForTakeover({required VoidCallback onTakeover}) {
     if (_takeoverListening || !_firestoreReady) return;
     _takeoverListening = true;
-    _takeoverSub = FirebaseFirestore.instance.collection('admin_sessions').doc('active').snapshots().listen((snapshot) {
+    _takeoverSub = FirebaseFirestore.instance.doc(_sessionDocPath).snapshots().listen((snapshot) {
       if (!snapshot.exists) return;
       final remoteDeviceId = snapshot.data()?['deviceId'] as String?;
       if (remoteDeviceId == null) return;

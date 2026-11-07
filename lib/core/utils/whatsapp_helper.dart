@@ -5,7 +5,50 @@ import '../constants/app_constants.dart';
 import 'currency_formatter.dart';
 
 class WhatsAppHelper {
-  /// Generates neatly formatted order message and launches WhatsApp directly.
+  /// Formats and shares a single product card to WhatsApp
+  static Future<bool> shareProduct({
+    required BuildContext context,
+    required String name,
+    required String category,
+    required double price,
+    required double mrp,
+    required String unit,
+    String? imageUrl,
+  }) async {
+    final buffer = StringBuffer();
+    buffer.writeln('🛍️ *SHALIMAR STORE — DAILY ESSENTIALS*');
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln('✨ *Product:* $name');
+    buffer.writeln('🏷️ *Category:* $category');
+    buffer.writeln('📦 *Pack Size:* $unit');
+    buffer.writeln('💰 *Price:* ${CurrencyFormatter.format(price)}');
+    if (mrp > price) {
+      final savings = mrp - price;
+      buffer.writeln('🏷️ *MRP:* ~${CurrencyFormatter.format(mrp)}~ (Save ${CurrencyFormatter.format(savings)}!)');
+    }
+    if (imageUrl != null && imageUrl.startsWith('http')) {
+      buffer.writeln('📸 *Photo:* $imageUrl');
+    }
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln('📍 *Shalimar Store (Since 1988)*');
+    buffer.writeln('📞 Order via WhatsApp: ${AppConstants.ownerPhone}');
+    buffer.writeln('⚡ _Sent from Shalimar Store App_');
+
+    final message = Uri.encodeComponent(buffer.toString());
+    final uri = Uri.parse('whatsapp://send?text=$message');
+    final webUri = Uri.parse('https://wa.me/?text=$message');
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        return await launchUrl(uri);
+      } else if (await canLaunchUrl(webUri)) {
+        return await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
   static Future<bool> sendOrder({
     required BuildContext context,
     required List<CartItem> items,
