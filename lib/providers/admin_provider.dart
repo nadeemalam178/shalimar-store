@@ -22,17 +22,28 @@ class AdminProvider with ChangeNotifier {
   }
 
   Future<bool> login(String id, String password) async {
-    if (AdminAuthService.authenticate(id, password)) {
-      _isLoggedIn = true;
-      _isAdminMode = true;
-      await AdminAuthService.ensureOwnerFirebaseSession();
-      final deviceId = await AdminSessionService.getOrCreateDeviceId();
-      await AdminSessionService.saveLocalSession(deviceId);
-      await AdminSessionService.claimSession();
-      _startSessionMonitoring();
-      return true;
+    if (!AdminAuthService.authenticate(id, password)) {
+      return false;
     }
-    return false;
+
+    // Single-Admin Enforcement: Prevent simultaneous logins
+    final conflict = await AdminSessionService.checkExistingActiveSession();
+    if (conflict != null) {
+      _sessionConflictMessage = conflict;
+      notifyListeners();
+      return false;
+    }
+
+    _isLoggedIn = true;
+    _isAdminMode = true;
+    _sessionConflictMessage = null;
+    await AdminAuthService.ensureOwnerFirebaseSession();
+    final deviceId = await AdminSessionService.getOrCreateDeviceId();
+    await AdminSessionService.saveLocalSession(deviceId);
+    await AdminSessionService.claimSession();
+    _startSessionMonitoring();
+    notifyListeners();
+    return true;
   }
 
   void _startSessionMonitoring() {

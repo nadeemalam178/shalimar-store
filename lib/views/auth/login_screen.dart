@@ -66,10 +66,17 @@ class _LoginScreenState extends State<LoginScreen> {
         final enteredPass = _passwordController.text;
         if (AdminAuthService.authenticate(enteredId, enteredPass)) {
           final adminProvider = context.read<AdminProvider>();
-          await adminProvider.login(enteredId, enteredPass);
-          // Owner goes directly to Admin Dashboard
+          final success = await adminProvider.login(enteredId, enteredPass);
+          if (!success) {
+            _showErrorSnackBar(adminProvider.sessionConflictMessage ?? 'Login failed. Active admin session on another device.');
+            return;
+          }
+          // Owner lands directly into Admin Dashboard, and pressing back opens Customer Preview ("Welcome Owner")
           if (mounted) {
             Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+            );
+            Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
             );
           }
@@ -704,8 +711,12 @@ class _LoginScreenState extends State<LoginScreen> {
           onDismiss: () => setState(() => _showAdminOverlay = false),
           onLoginSuccess: () {
             setState(() => _showAdminOverlay = false);
-            // Owner goes directly to Admin Dashboard, not customer screen
+            // Root route is CustomerMainScreen so hitting back lands on Customer Preview ("Welcome Owner")
             Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+            );
+            // Directly open Admin Dashboard
+            Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
             );
           },

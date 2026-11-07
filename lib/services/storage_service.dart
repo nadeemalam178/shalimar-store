@@ -15,6 +15,19 @@ class StorageService {
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
 
+    // ── One-time clean auth session reset for v3.4.4 update ──
+    // Ensures existing test sessions are cleanly cleared so Owner logs in via Owner Portal
+    // and Customer logs in via Customer Auth with zero session contamination.
+    final hasResetSession = _prefs?.getBool('session_clean_reset_v344') ?? false;
+    if (!hasResetSession) {
+      await _prefs?.setBool(AppConstants.keyAdminSessionActive, false);
+      await _prefs?.remove(AppConstants.keyAdminLoginTimestamp);
+      await _prefs?.remove(AppConstants.keyAdminDeviceId);
+      await _prefs?.remove(AppConstants.keyUsername);
+      await _prefs?.setBool('session_clean_reset_v344', true);
+      debugPrint('🧹 [StorageService] One-time session clean reset applied for v3.4.4');
+    }
+
     // ── Clear only obsolete catalogue cache on app version update ──
     // Preserves cart data, favorites, user profile, past orders,
     // onboarding state, and authentication tokens.

@@ -161,6 +161,16 @@ class NotificationService {
     );
   }
 
+  /// Notify customer that an item in their favorites or cart went out of stock
+  static Future<void> showOutOfStockNotification(Product product) async {
+    await showNotification(
+      id: product.id.hashCode + 1,
+      title: '⚠️ Item Out of Stock',
+      body: '${product.name} in your favorites/cart is now out of stock.',
+      payload: 'product_${product.id}',
+    );
+  }
+
   /// Notify customer that their WhatsApp order has been dispatched
   static Future<void> showOrderPlacedNotification(String orderId, double amount) async {
     await showNotification(

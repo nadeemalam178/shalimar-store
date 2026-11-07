@@ -86,15 +86,15 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                 decoration: BoxDecoration(
                   color: context.isDark ? const Color(0xFF262626) : AppColors.surfaceVariant.withAlpha(120),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: context.borderSubtle),
+                  border: Border.all(color: admin.isLoggedIn ? AppColors.accent.withAlpha(120) : context.borderSubtle),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
                       radius: 14,
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: admin.isLoggedIn ? AppColors.accent : AppColors.primary,
                       child: Text(
-                        user.username.isNotEmpty ? user.username[0].toUpperCase() : 'U',
+                        admin.isLoggedIn ? '👑' : (user.username.isNotEmpty ? user.username[0].toUpperCase() : 'U'),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -111,11 +111,11 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                           style: TextStyle(fontSize: 10, color: context.textSecondary),
                         ),
                         Text(
-                          user.username.isNotEmpty ? user.username : 'Customer',
+                          admin.isLoggedIn ? 'Owner' : (user.username.isNotEmpty ? user.username : 'Customer'),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: context.textPrimary,
+                            color: admin.isLoggedIn ? AppColors.accent : context.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -152,41 +152,41 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               ),
             ),
 
-            // Right: Admin Portal Switch with Lock Icon
-            InkWell(
-              onTap: _handleAdminSwitchTap,
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: admin.isLoggedIn
-                      ? AppColors.primary.withAlpha(30)
-                      : (context.isDark ? const Color(0xFF262626) : Colors.grey.shade100),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: admin.isLoggedIn ? AppColors.primary : context.borderSubtle,
+            // Right: Admin Portal Switch (ONLY visible when Store Owner is logged in)
+            if (admin.isLoggedIn)
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+                  );
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(30),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.primary),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.admin_panel_settings, size: 16, color: AppColors.primary),
+                      SizedBox(width: 4),
+                      Text(
+                        'Admin',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      admin.isLoggedIn ? Icons.admin_panel_settings : Icons.lock_outline_rounded,
-                      size: 16,
-                      color: admin.isLoggedIn ? AppColors.primary : context.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      admin.isLoggedIn ? 'Admin' : 'Owner',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: admin.isLoggedIn ? AppColors.primary : context.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+              )
+            else
+              const SizedBox(width: 42),
           ],
         ),
       ),

@@ -61,7 +61,8 @@ class _AdminLoginOverlayState extends State<AdminLoginOverlay> {
       widget.onLoginSuccess();
     } else {
       setState(() {
-        _errorMessage = 'Invalid ID or Password. Only Shalimar Store owner can access.';
+        _errorMessage = adminProvider.sessionConflictMessage ??
+            'Invalid ID or Password. Only Shalimar Store owner can access.';
       });
     }
   }

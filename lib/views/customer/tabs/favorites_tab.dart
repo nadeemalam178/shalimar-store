@@ -135,7 +135,11 @@ class FavoritesTab extends StatelessWidget {
                             mainAxisSpacing: 12,
                           ),
                       delegate: SliverChildBuilderDelegate((context, index) {
-                        return ProductCard(product: favoriteProducts[index]);
+                        final p = favoriteProducts[index];
+                        return ProductCard(
+                          key: ValueKey('fav_${p.id}'),
+                          product: p,
+                        );
                       }, childCount: favoriteProducts.length),
                     ),
                   ),

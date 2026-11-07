@@ -135,114 +135,91 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       return matchesCategory && matchesStock && matchesSearch;
     }).toList();
 
-    return Scaffold(
-      backgroundColor: context.scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: context.surfaceColor,
-        elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(
-                color: AppColors.accent,
-                shape: BoxShape.circle,
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: context.scaffoldBg,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: context.surfaceColor,
+          elevation: 0,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: AppColors.accent,
+                  shape: BoxShape.circle,
+                ),
+                child: const CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.white,
+                  backgroundImage: AssetImage(AppConstants.logoPath),
+                ),
               ),
-              child: const CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.white,
-                backgroundImage: AssetImage(AppConstants.logoPath),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Admin Management',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: context.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    'Shalimar Store Control Panel',
+                    style: TextStyle(fontSize: 10, color: context.textSecondary),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Admin Management',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: context.textPrimary,
-                  ),
-                ),
-                Text(
-                  'Shalimar Store Control Panel',
-                  style: TextStyle(fontSize: 10, color: context.textSecondary),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.cloud_sync_rounded, color: AppColors.primary),
-            tooltip: 'Sync All Products to Cloud',
-            onPressed: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('☁️ Syncing all products to cloud...'),
-                  duration: Duration(seconds: 1),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-              final count = await catalogue.syncAllToCloud();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('✅ Synced $count products to cloud!'),
-                    backgroundColor: AppColors.success,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: 'Store Settings & Password',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => const StoreSettingsDialog(),
                 );
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Store Settings & Password',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (_) => const StoreSettingsDialog(),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.storefront_rounded,
-              color: AppColors.primary,
+              },
             ),
-            tooltip: 'Switch to Customer View',
-            onPressed: () {
-              admin.exitAdminMode();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              } else {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
-                );
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.logout_rounded,
-              color: Colors.redAccent,
-            ),
-            tooltip: 'Sign Out Admin',
-            onPressed: () async {
-              await admin.logout();
-              if (context.mounted) {
+            IconButton(
+              icon: const Icon(
+                Icons.storefront_rounded,
+                color: AppColors.primary,
+              ),
+              tooltip: 'Switch to Customer View',
+              onPressed: () {
+                admin.exitAdminMode();
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
                   (route) => false,
                 );
-              }
-            },
-          ),
-        ],
-      ),
+              },
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.logout_rounded,
+                color: Colors.redAccent,
+              ),
+              tooltip: 'Sign Out Admin',
+              onPressed: () async {
+                await admin.logout();
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+                    (route) => false,
+                  );
+                }
+              },
+            ),
+          ],
+        ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           showDialog(
@@ -760,6 +737,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
         ],
       ),
+    ),
     );
   }
 

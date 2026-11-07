@@ -442,7 +442,10 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
                           ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final product = catalogue.filteredProducts[index];
-                        return ProductCard(product: product);
+                        return ProductCard(
+                          key: ValueKey('catalog_${product.id}'),
+                          product: product,
+                        );
                       }, childCount: catalogue.filteredProducts.length),
                     ),
                   ),

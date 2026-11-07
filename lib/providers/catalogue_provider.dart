@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/product.dart';
+import '../services/admin_auth_service.dart';
 import '../services/cloud_sync_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
@@ -56,9 +57,52 @@ class CatalogueProvider with ChangeNotifier {
   }
 
   void _syncFromCloud(List<Product> cloudProducts) {
-    _products = cloudProducts;
+    if (cloudProducts.isEmpty) return;
+
+    if (_products.isNotEmpty) {
+      _checkAndNotifyStockChanges(oldList: _products, newList: cloudProducts);
+    }
+
+    // Safely merge: update products by ID without dropping existing catalogue items
+    final Map<String, Product> productMap = {
+      for (final p in _products) p.id: p,
+    };
+    for (final cp in cloudProducts) {
+      productMap[cp.id] = cp;
+    }
+
+    _products = productMap.values.toList();
     unawaited(StorageService.saveProducts(_products));
     notifyListeners();
+  }
+
+  void _checkAndNotifyStockChanges({required List<Product> oldList, required List<Product> newList}) {
+    // If Admin is active on this device, do not trigger customer push notifications
+    if (AdminAuthService.isLoggedIn) return;
+
+    final favoriteIds = StorageService.loadFavorites();
+    final cartProductIds = StorageService.loadCart().map((i) => i.product.id).toSet();
+
+    for (final newP in newList) {
+      final oldIndex = oldList.indexWhere((p) => p.id == newP.id);
+      if (oldIndex == -1) continue;
+      final oldP = oldList[oldIndex];
+
+      final isFavorite = favoriteIds.contains(newP.id);
+      final isInCart = cartProductIds.contains(newP.id);
+      final isSubscribed = NotificationService.isSubscribed(newP.id);
+
+      // Notify strictly if customer has this product in Favorites, Cart, or subscribed to restock
+      if (!isFavorite && !isInCart && !isSubscribed) continue;
+
+      if (!oldP.inStock && newP.inStock) {
+        // Back in stock notification
+        NotificationService.showRestockNotification(newP);
+      } else if (oldP.inStock && !newP.inStock) {
+        // Out of stock notification
+        NotificationService.showOutOfStockNotification(newP);
+      }
+    }
   }
 
   Future<void> addCategory(String categoryName) async {
@@ -140,10 +184,6 @@ class CatalogueProvider with ChangeNotifier {
       _products[index] = updated;
       await StorageService.saveProducts(_products);
       notifyListeners();
-
-      if (willBeInStock) {
-        NotificationService.showRestockNotification(updated);
-      }
 
       await CloudSyncService.syncProductToCloud(updated);
     }

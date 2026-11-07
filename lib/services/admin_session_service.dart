@@ -74,6 +74,36 @@ class AdminSessionService {
     }
   }
 
+  /// Checks if another device currently holds an active admin session.
+  /// Returns an error message if an active session exists on another device, or null if clear.
+  static Future<String?> checkExistingActiveSession() async {
+    if (!_firestoreReady) return null;
+    try {
+      final myDeviceId = await getOrCreateDeviceId();
+      final doc = await FirebaseFirestore.instance.collection('admin_sessions').doc('active').get();
+      if (!doc.exists) return null;
+      final data = doc.data();
+      if (data == null) return null;
+
+      final remoteDeviceId = data['deviceId'] as String?;
+      if (remoteDeviceId == null || remoteDeviceId == myDeviceId) {
+        return null; // Same device or unoccupied
+      }
+
+      final heartbeatTs = data['heartbeat'] as Timestamp?;
+      if (heartbeatTs != null) {
+        final lastBeat = heartbeatTs.toDate();
+        if (DateTime.now().difference(lastBeat) < heartbeatStaleAfter) {
+          return 'Another device is currently logged in as Store Owner. Simultaneous admin logins are blocked. Please log out from the other device first.';
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint('⚠️ [AdminSession] Session check error: $e');
+      return null;
+    }
+  }
+
   static Future<bool> claimSession() async {
     final deviceId = await getOrCreateDeviceId();
     if (!_firestoreReady) return true;
