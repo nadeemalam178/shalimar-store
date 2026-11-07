@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
 import '../models/cart_item.dart';
@@ -100,12 +101,18 @@ class StorageService {
     if (raw != null && raw.isNotEmpty) {
       try {
         final list = jsonDecode(raw) as List<dynamic>;
-        return list.map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();
+        if (list.isNotEmpty) {
+          return list.map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();
+        }
       } catch (e) {
-        // Corrupted cache — start clean
+        // Corrupted cache — fallback to standard
       }
     }
-    return [];
+    final initial = await loadStandardKiranaCatalogue();
+    if (initial.isNotEmpty) {
+      await saveProducts(initial);
+    }
+    return initial;
   }
 
   static Future<void> saveProducts(List<Product> products) async {
@@ -151,6 +158,13 @@ class StorageService {
 
   // ── Standard catalogue ──
   static Future<List<Product>> loadStandardKiranaCatalogue() async {
-    return [];
+    try {
+      final jsonString = await rootBundle.loadString(AppConstants.catalogueAssetPath);
+      final list = jsonDecode(jsonString) as List<dynamic>;
+      return list.map((e) => Product.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (e) {
+      debugPrint('⚠️ [StorageService] Error loading standard catalogue from assets: $e');
+      return [];
+    }
   }
 }

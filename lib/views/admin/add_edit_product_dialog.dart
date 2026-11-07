@@ -31,6 +31,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   late bool _inStock;
   String? _localImagePath;
   bool _showUrlField = false;
+  bool _isSaving = false;
 
   final List<String> _commonCategories = [
     'Atta, Rice & Grains',
@@ -105,86 +106,93 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     }
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_isSaving) return;
 
-    final price = double.tryParse(_priceCtrl.text) ?? 0.0;
-    final mrp = double.tryParse(_mrpCtrl.text) ?? price;
-    final catalogue = context.read<CatalogueProvider>();
+    setState(() => _isSaving = true);
 
-    final imagePath = _imageCtrl.text.trim();
-
-    // ── Upload image to Supabase Storage if it's a local file ──
-    if (_localImagePath != null && !imagePath.startsWith('http')) {
-      _uploadImageAndSave(productId: null, localPath: _localImagePath!);
-    } else {
-      _saveProduct(productId: null, imageUrl: imagePath);
-    }
-
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(widget.productToEdit == null ? 'Product added!' : 'Product updated!'),
-        backgroundColor: AppColors.success,
-      ),
-    );
-  }
-
-  /// Uploads local image to Supabase Storage, then saves product with public URL
-  void _uploadImageAndSave({required String? productId, required String localPath}) async {
     try {
-      final bytes = await File(localPath).readAsBytes();
-      final fileName = localPath.split('/').last;
-      final uploadId = productId ?? const Uuid().v4();
+      final price = double.tryParse(_priceCtrl.text) ?? 0.0;
+      final mrp = double.tryParse(_mrpCtrl.text) ?? price;
+      final catalogue = context.read<CatalogueProvider>();
+      final imagePath = _imageCtrl.text.trim();
+      String finalImageUrl = imagePath;
 
-      final publicUrl = await ImageUploadService.uploadProductImage(
-        productId: uploadId,
-        bytes: bytes,
-        fileName: fileName,
-      );
+      final uploadId = widget.productToEdit?.id ?? const Uuid().v4();
 
-      if (!mounted) return;
-      _saveProduct(productId: uploadId, imageUrl: publicUrl ?? localPath);
-    } catch (e) {
-      debugPrint('⚠️ [AddEditProduct] Image upload failed: $e');
-      if (!mounted) return;
-      _saveProduct(productId: productId, imageUrl: localPath);
-    }
-  }
+      // ── Upload image to Supabase Storage if local image is selected ──
+      if (_localImagePath != null && File(_localImagePath!).existsSync() && !imagePath.startsWith('http')) {
+        try {
+          final file = File(_localImagePath!);
+          final bytes = await file.readAsBytes();
+          final fileName = _localImagePath!.split(RegExp(r'[/\\]')).last;
 
-  /// Saves the product to catalogue + cloud
-  void _saveProduct({required String? productId, required String imageUrl}) {
-    final price = double.tryParse(_priceCtrl.text) ?? 0.0;
-    final mrp = double.tryParse(_mrpCtrl.text) ?? price;
-    final catalogue = context.read<CatalogueProvider>();
+          final publicUrl = await ImageUploadService.uploadProductImage(
+            productId: uploadId,
+            bytes: bytes,
+            fileName: fileName,
+          );
 
-    if (widget.productToEdit == null) {
-      // Add new
-      catalogue.addProduct(
-        id: productId,
-        name: _nameCtrl.text.trim(),
-        category: _category,
-        price: price,
-        mrp: mrp,
-        unit: _unitCtrl.text.trim(),
-        imageUrl: imageUrl,
-        inStock: _inStock,
-        description: _descCtrl.text.trim(),
-      );
-    } else {
-      // Edit existing
-      catalogue.updateProduct(
-        widget.productToEdit!.copyWith(
+          if (publicUrl != null && publicUrl.isNotEmpty) {
+            finalImageUrl = publicUrl;
+          }
+        } catch (uploadErr) {
+          debugPrint('⚠️ [AddEditProduct] Image upload to Supabase failed: $uploadErr');
+        }
+      }
+
+      if (widget.productToEdit == null) {
+        // Add new product & sync to Firestore
+        await catalogue.addProduct(
+          id: uploadId,
           name: _nameCtrl.text.trim(),
           category: _category,
           price: price,
           mrp: mrp,
           unit: _unitCtrl.text.trim(),
-          imageUrl: imageUrl,
+          imageUrl: finalImageUrl,
           inStock: _inStock,
           description: _descCtrl.text.trim(),
-        ),
-      );
+        );
+      } else {
+        // Edit existing product & sync to Firestore
+        await catalogue.updateProduct(
+          widget.productToEdit!.copyWith(
+            name: _nameCtrl.text.trim(),
+            category: _category,
+            price: price,
+            mrp: mrp,
+            unit: _unitCtrl.text.trim(),
+            imageUrl: finalImageUrl,
+            inStock: _inStock,
+            description: _descCtrl.text.trim(),
+          ),
+        );
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.productToEdit == null ? '✅ Product added & synced to cloud!' : '✅ Product updated & synced!'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('⚠️ [AddEditProduct] Error saving product: $e');
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save product: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -497,8 +505,14 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                     ),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _save,
-                      child: Text(isEditing ? 'Save Changes' : 'Add to Catalogue'),
+                      onPressed: _isSaving ? null : _save,
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : Text(isEditing ? 'Save Changes' : 'Add to Catalogue'),
                     ),
                   ),
                 ],

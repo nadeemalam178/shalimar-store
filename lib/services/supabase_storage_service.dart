@@ -26,12 +26,18 @@ class SupabaseStorageService {
     if (!_initialized) return null;
     try {
       final path = '$productId/${fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_')}';
+      final lower = fileName.toLowerCase();
+      final contentType = lower.endsWith('.png')
+          ? 'image/png'
+          : (lower.endsWith('.webp') ? 'image/webp' : 'image/jpeg');
       await Supabase.instance.client.storage.from(_bucket).uploadBinary(
             path,
             bytes,
-            fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
+            fileOptions: FileOptions(contentType: contentType, upsert: true),
           );
-      return Supabase.instance.client.storage.from(_bucket).getPublicUrl(path);
+      final publicUrl = Supabase.instance.client.storage.from(_bucket).getPublicUrl(path);
+      debugPrint('📸 [SupabaseStorage] Successfully uploaded: $publicUrl');
+      return publicUrl;
     } catch (e) {
       debugPrint('⚠️ [SupabaseStorage] Upload failed: $e');
       return null;

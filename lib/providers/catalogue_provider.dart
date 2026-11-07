@@ -114,7 +114,7 @@ class CatalogueProvider with ChangeNotifier {
     _products.insert(0, newProduct);
     await StorageService.saveProducts(_products);
     notifyListeners();
-    unawaited(CloudSyncService.syncProductToCloud(newProduct));
+    await CloudSyncService.syncProductToCloud(newProduct);
   }
 
   Future<int> syncAllToCloud() async {
@@ -127,7 +127,7 @@ class CatalogueProvider with ChangeNotifier {
       _products[index] = updated;
       await StorageService.saveProducts(_products);
       notifyListeners();
-      unawaited(CloudSyncService.syncProductToCloud(updated));
+      await CloudSyncService.syncProductToCloud(updated);
     }
   }
 
@@ -145,7 +145,7 @@ class CatalogueProvider with ChangeNotifier {
         NotificationService.showRestockNotification(updated);
       }
 
-      unawaited(CloudSyncService.syncProductToCloud(updated));
+      await CloudSyncService.syncProductToCloud(updated);
     }
   }
 
@@ -153,7 +153,7 @@ class CatalogueProvider with ChangeNotifier {
     _products.removeWhere((p) => p.id == productId);
     await StorageService.saveProducts(_products);
     notifyListeners();
-    unawaited(CloudSyncService.deleteProductFromCloud(productId));
+    await CloudSyncService.deleteProductFromCloud(productId);
   }
 
   Future<void> restoreStandardCatalogue() async {

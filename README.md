@@ -2,10 +2,10 @@
   <img src="assets/images/logo.png" width="140" alt="Shalimar Store Logo" />
 </p>
 
-<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.4.2)</h1>
+<h1 align="center">🛒 Shalimar Store — Since 1988 (v3.4.3)</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v3.4.2-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-v3.4.3-crimson" alt="Version" />
   <img src="https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
   <img src="https://img.shields.io/badge/Auth-Email%20%7C%20Google%20Sign--In%20Active-blue" alt="Authentication" />
   <img src="https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
