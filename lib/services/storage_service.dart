@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
 import '../models/cart_item.dart';
@@ -15,17 +14,23 @@ class StorageService {
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
 
-    // ── Auto-clear old cached data on app version update ──
-    // When the version changes (e.g., v3.3.0 → v3.4.0), wipe stale
-    // SharedPreferences data so prefilled demo data from older builds
-    // does not carry over into production.
+    // ── Clear only obsolete catalogue cache on app version update ──
+    // Preserves cart data, favorites, user profile, past orders,
+    // onboarding state, and authentication tokens.
     final storedVersion = _prefs?.getString('app_version');
     final currentVersion = AppConstants.appVersion;
     if (storedVersion != null && storedVersion != currentVersion) {
-      await clearAll();
-      debugPrint('🧹 [StorageService] Cleared stale cache: $storedVersion → $currentVersion');
+      await clearCatalogueCache();
+      debugPrint('🧹 [StorageService] Cleared obsolete catalogue cache: $storedVersion → $currentVersion (User & auth preserved)');
     }
     await _prefs?.setString('app_version', currentVersion);
+  }
+
+  /// Clears only the cached product catalogue and custom categories,
+  /// preserving all user data, cart, favorites, and authentication sessions.
+  static Future<void> clearCatalogueCache() async {
+    await _prefs?.remove(AppConstants.keyProducts);
+    await _prefs?.remove(AppConstants.keyCustomCategories);
   }
 
   // ── Cart ──

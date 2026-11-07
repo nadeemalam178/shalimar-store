@@ -117,8 +117,8 @@ class CatalogueProvider with ChangeNotifier {
     unawaited(CloudSyncService.syncProductToCloud(newProduct));
   }
 
-  Future<void> syncAllToCloud() async {
-    await CloudSyncService.pushFullCatalogueToCloud(_products);
+  Future<int> syncAllToCloud() async {
+    return await CloudSyncService.pushFullCatalogueToCloud(_products);
   }
 
   Future<void> updateProduct(Product updated) async {

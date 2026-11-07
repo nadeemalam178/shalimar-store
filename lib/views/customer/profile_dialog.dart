@@ -6,6 +6,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/theme_extensions.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/whatsapp_helper.dart';
+import '../../providers/admin_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/catalogue_provider.dart';
 import '../../providers/user_provider.dart';
@@ -477,14 +478,15 @@ class _ProfileDialogState extends State<ProfileDialog> {
                       ),
                     );
                     if (confirmed == true && context.mounted) {
-                      Navigator.pop(context); // Close ProfileDialog
+                      final admin = context.read<AdminProvider>();
+                      final nav = Navigator.of(context);
+                      nav.pop(); // Close ProfileDialog
                       await user.logout();
-                      if (context.mounted) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                          (route) => false,
-                        );
-                      }
+                      await admin.logout();
+                      nav.pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
+                      );
                     }
                   },
                   icon: const Icon(Icons.logout, size: 14, color: Colors.red),

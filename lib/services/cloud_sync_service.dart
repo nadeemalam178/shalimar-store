@@ -33,7 +33,8 @@ class CloudSyncService {
       _streamSub?.cancel();
       _streamSub = firestore.collection(_collectionPath).snapshots().listen((snapshot) {
         if (snapshot.docs.isNotEmpty) hasSeenNonEmpty = true;
-        if (snapshot.docs.isEmpty && snapshot.metadata.isFromCache && !hasSeenNonEmpty) {
+        if (snapshot.docs.isEmpty && !hasSeenNonEmpty) {
+          debugPrint('ℹ️ [CloudSync] Firestore products collection is empty; preserving local catalog.');
           return;
         }
 
@@ -47,7 +48,7 @@ class CloudSyncService {
             debugPrint('⚠️ [CloudSync] Error parsing product doc ${doc.id}: $e');
           }
         }
-        debugPrint('⚡ [CloudSync] Mirrored ${cloudProducts.length} live products');
+        debugPrint('⚡ [CloudSync] Mirrored ${cloudProducts.length} live products from Firestore');
         onCatalogueUpdated(cloudProducts);
       }, onError: (error) {
         debugPrint('⚠️ [CloudSync] Firestore live stream error: $error');
@@ -70,6 +71,7 @@ class CloudSyncService {
       _isSyncing = true;
       await firestore.collection(_collectionPath).doc(productId).delete();
       unawaited(ImageUploadService.deleteProductImages(productId));
+      debugPrint('🗑️ [CloudSync] Deleted $productId from Firestore');
       return true;
     } catch (e) {
       debugPrint('⚠️ [CloudSync] Error deleting product $productId: $e');
@@ -79,20 +81,25 @@ class CloudSyncService {
     }
   }
 
-  /// Sync a single product to Firestore.
-  static Future<void> syncProductToCloud(Product product) async {
+  /// Sync a single product to Firestore. Returns true on success.
+  static Future<bool> syncProductToCloud(Product product) async {
     final firestore = _firestore;
-    if (firestore == null) return;
+    if (firestore == null) {
+      debugPrint('⚠️ [CloudSync] Firestore not ready, cannot sync ${product.id}');
+      return false;
+    }
     try {
       final data = product.toJson();
       await firestore.collection(_collectionPath).doc(product.id).set(data);
-      debugPrint('☁️ [CloudSync] Synced ${product.id} to cloud');
+      debugPrint('☁️ [CloudSync] Synced ${product.id} (${product.name}) to Firestore');
+      return true;
     } catch (e) {
       debugPrint('⚠️ [CloudSync] Failed to sync ${product.id}: $e');
+      return false;
     }
   }
 
-  /// Push the entire local catalogue to Firestore.
+  /// Push the entire local catalogue to Firestore. Returns count of successfully synced items.
   static Future<int> pushFullCatalogueToCloud(List<Product> products) async {
     final firestore = _firestore;
     if (firestore == null) return 0;
@@ -100,12 +107,12 @@ class CloudSyncService {
     try {
       _isSyncing = true;
       for (final product in products) {
-        await syncProductToCloud(product);
-        synced++;
+        final success = await syncProductToCloud(product);
+        if (success) synced++;
       }
-      debugPrint('☁️ [CloudSync] Pushed $synced products to cloud');
+      debugPrint('☁️ [CloudSync] Batch push complete: $synced / ${products.length} pushed to cloud');
     } catch (e) {
-      debugPrint('⚠️ [CloudSync] Batch push failed: $e');
+      debugPrint('⚠️ [CloudSync] Batch push error: $e');
     } finally {
       _isSyncing = false;
     }

@@ -73,11 +73,12 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
           color: context.scaffoldBg,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
           child: Container(
+            height: 48,
             decoration: BoxDecoration(
               color: context.isDark
                   ? const Color(0xFF222222)
                   : AppColors.surfaceVariant.withAlpha(120),
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(color: context.borderSubtle),
               boxShadow: [
                 BoxShadow(
@@ -89,40 +90,46 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
                 ),
               ],
             ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: catalogue.setSearchQuery,
-              style: TextStyle(color: context.textPrimary, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Search 1,000+ atta, oil, spices, soaps...',
-                hintStyle: TextStyle(
-                  fontSize: 13,
-                  color: context.textSecondary,
-                ),
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  color: AppColors.primary,
-                  size: 22,
-                ),
-                suffixIcon: catalogue.searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          size: 18,
-                          color: context.textSecondary,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          catalogue.setSearchQuery('');
-                        },
-                      )
-                    : null,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: TextField(
+                controller: _searchController,
+                onChanged: catalogue.setSearchQuery,
+                style: TextStyle(color: context.textPrimary, fontSize: 14),
+                textAlignVertical: TextAlignVertical.center,
+                decoration: InputDecoration(
+                  hintText: 'Search 1,000+ atta, oil, spices, soaps...',
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: context.textSecondary,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                  suffixIcon: catalogue.searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear,
+                            size: 18,
+                            color: context.textSecondary,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            catalogue.setSearchQuery('');
+                          },
+                        )
+                      : null,
+                  isDense: true,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ),

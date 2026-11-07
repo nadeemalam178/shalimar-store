@@ -10,6 +10,7 @@ import '../../core/utils/currency_formatter.dart';
 import '../../models/product.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/catalogue_provider.dart';
+import '../customer/customer_main_screen.dart';
 import 'add_edit_product_dialog.dart';
 import 'store_settings_dialog.dart';
 
@@ -175,6 +176,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.cloud_sync_rounded, color: AppColors.primary),
+            tooltip: 'Sync All Products to Cloud',
+            onPressed: () async {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('☁️ Syncing all products to cloud...'),
+                  duration: Duration(seconds: 1),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              final count = await catalogue.syncAllToCloud();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('✅ Synced $count products to cloud!'),
+                    backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Store Settings & Password',
             onPressed: () {
@@ -186,11 +210,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           IconButton(
             icon: const Icon(
-              Icons.exit_to_app_rounded,
+              Icons.storefront_rounded,
               color: AppColors.primary,
             ),
             tooltip: 'Switch to Customer View',
-            onPressed: () => admin.exitAdminMode(),
+            onPressed: () {
+              admin.exitAdminMode();
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+                );
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.logout_rounded,
+              color: Colors.redAccent,
+            ),
+            tooltip: 'Sign Out Admin',
+            onPressed: () async {
+              await admin.logout();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+                  (route) => false,
+                );
+              }
+            },
           ),
         ],
       ),
@@ -259,11 +308,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                   const SizedBox(height: 12),
 
-                  // Rounded Search Bar
+                  // Rounded Search Bar (48dp Pill)
                   Container(
+                    height: 48,
                     decoration: BoxDecoration(
                       color: context.surfaceColor,
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(color: context.borderSubtle),
                       boxShadow: [
                         BoxShadow(
@@ -275,47 +325,53 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                       ],
                     ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (val) => setState(() => _searchFilter = val),
-                      style: TextStyle(
-                        color: context.textPrimary,
-                        fontSize: 13,
-                      ),
-                      decoration: InputDecoration(
-                        hintText:
-                            'Search 1,000+ items by name, unit, category...',
-                        hintStyle: TextStyle(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) => setState(() => _searchFilter = val),
+                        style: TextStyle(
+                          color: context.textPrimary,
                           fontSize: 13,
-                          color: context.textSecondary,
                         ),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          size: 22,
-                          color: AppColors.primary,
+                        textAlignVertical: TextAlignVertical.center,
+                        decoration: InputDecoration(
+                          hintText:
+                              'Search 1,000+ items by name, unit, category...',
+                          hintStyle: TextStyle(
+                            fontSize: 13,
+                            color: context.textSecondary,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                          suffixIcon: _searchFilter.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    size: 18,
+                                    color: context.textSecondary,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchFilter = '');
+                                  },
+                                )
+                              : null,
+                          isDense: true,
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                         ),
-                        suffixIcon: _searchFilter.isNotEmpty
-                            ? IconButton(
-                                icon: Icon(
-                                  Icons.clear,
-                                  size: 18,
-                                  color: context.textSecondary,
-                                ),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchFilter = '');
-                                },
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 14,
-                        ),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
                       ),
                     ),
                   ),

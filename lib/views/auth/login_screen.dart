@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/theme_extensions.dart';
-import '../../models/user_model.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/admin_auth_service.dart';
@@ -52,6 +51,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       if (_isSignUp) {
+        // Ensure clean customer session
+        await context.read<AdminProvider>().logout();
         final userModel = await AuthService.registerWithEmailPassword(
           name: _nameController.text,
           email: _emailController.text,
@@ -65,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final enteredPass = _passwordController.text;
         if (AdminAuthService.authenticate(enteredId, enteredPass)) {
           final adminProvider = context.read<AdminProvider>();
-          adminProvider.login(enteredId, enteredPass);
+          await adminProvider.login(enteredId, enteredPass);
           // Owner goes directly to Admin Dashboard
           if (mounted) {
             Navigator.of(context).pushReplacement(
@@ -75,6 +76,8 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
+        // Standard Customer Sign-In (ensure any leftover admin session is cleared)
+        await context.read<AdminProvider>().logout();
         final userModel = await AuthService.signInWithEmailPassword(
           email: _emailController.text,
           password: _passwordController.text,
@@ -114,6 +117,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final userProvider = context.read<UserProvider>();
 
     try {
+      // Ensure clean customer session
+      await context.read<AdminProvider>().logout();
       final userModel = await AuthService.signInWithGoogle();
       userProvider.setCurrentUser(userModel);
 
@@ -493,22 +498,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           keyboardType: TextInputType.emailAddress,
                           style: TextStyle(color: context.textPrimary),
                           decoration: InputDecoration(
-                            labelText: _isSignUp ? 'Email Address *' : 'User ID or Email *',
-                            hintText: _isSignUp ? 'e.g. yourname@gmail.com' : 'e.g. Shalimar@1988 or email',
-                            prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary),
+                            labelText: 'Email Address *',
+                            hintText: 'e.g. yourname@gmail.com',
+                            prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
                             filled: true,
                             fillColor: context.inputFill,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           validator: (val) {
                             if (val == null || val.trim().isEmpty) {
-                              return 'Please enter your ${_isSignUp ? 'email address' : 'User ID or email'}';
+                              return 'Please enter your email address';
                             }
                             final clean = val.trim().toLowerCase();
                             if (!_isSignUp && (clean == 'shalimar@1988' || clean == 'shalimar')) {
                               return null;
                             }
-                            if (_isSignUp && (!clean.contains('@') || !clean.contains('.'))) {
+                            if (!clean.contains('@') || !clean.contains('.')) {
                               return 'Please enter a valid email address';
                             }
                             return null;
@@ -598,60 +603,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                         ),
                         const SizedBox(height: 18),
-
-                        // ── Store Owner Section ── Prominent Direct Owner Login ──
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Store Owner',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    setState(() => _showAdminOverlay = true);
-                                  },
-                                  icon: const Icon(Icons.admin_panel_settings_rounded, size: 18),
-                                  label: const Text(
-                                    'Owner Login (Shalimar@1988)',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'ID: Shalimar@1988  •  Password: Shal1mar@1988#',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
 
                         // Divider
                         Row(
