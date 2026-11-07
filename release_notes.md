@@ -1,60 +1,47 @@
-# 🛒 Shalimar Store v3.4.1 Release Notes
+# 🛒 Shalimar Store v3.4.5 Release Notes
 
 **Shalimar Store (Est. 1988) — Official Mobile Application**  
 *Serving Trust, Quality & Purity on Ashok Raj Path, Alamganj, Patna — 800007, Bihar*
 
 ---
 
-## 🚀 What's New in Version 3.4.1
+## 🚀 What's New in Version 3.4.5
 
-### 🔄 OTA Update Fix
-- Version bumped to **v3.4.1** so OTA updates now trigger correctly
-- Previous v3.4.0 matched installed version, so no update banner appeared
-- Now: any device on v3.4.0 or older will see the update notification
+### 🚫 Complete Removal of Dummy Catalog Data
+- Removed the automatic fallback that restored the 24 demo Kirana items from local assets.
+- The app now strictly mirrors the live Cloud inventory: what the owner enters is what everyone sees, with zero ghost items.
 
-### 🔄 Real-Time Cloud Sync
-- Admin changes instantly appear on all customer phones (< 1 second)
-- Powered by Firebase Firestore (`products` collection)
-- Offline-first: customers browse last known catalogue when network drops
-- Deletions propagate too (product removed → gone on all devices)
+### 🖼️ Seamless Supabase Photo Uploads
+- Resolved the image upload flow so newly captured/picked product images upload directly to Supabase Storage before updating Firestore.
+- Public image URLs load on both Admin and Customer devices immediately.
 
-### 🔐 Persistent Admin Login
-- Owner signs in once (`Shalimar@1988` / `Shal1mar@1988#`)
-- 7-day session survives app restarts
-- Automatic Firebase Auth session for Firestore write access
+### 🎨 Out-of-Stock Rendering & Visual Glitch Fix
+- Fixed the Flutter render tree issue where marking an item "Out of Stock" caused other product cards to lose their background colors or text data.
+- Out of stock now cleanly dims the product without breaking UI layout or adjacent items.
 
-### 🚫 Single Active Admin Session
-- Only one device holds admin role at a time
-- New login on another device auto-logs previous device out
-- Takeover detection via `admin_sessions/active` Firestore doc
+### 🔔 Smart Customer-Only Stock Notifications
+- Store owners no longer receive local notifications when changing stock states in the Admin Dashboard.
+- Customer phones receive restock and out-of-stock alerts only if the item is in their **Cart**, **Favorites**, or restock alerts.
 
-### 🖼️ Supabase Storage Images
-- Photos uploaded to Supabase Storage (1 GB free tier)
-- Public bucket `product-images` with RLS
-- URL saved in product document → all customers see the same image
+### 👑 Streamlined Owner Experience
+- Logging in as Store Owner bypasses customer registration straight into Admin Management.
+- Dedicated "Switch to Customer View" button lets the owner preview the store with `"Welcome, Owner 👑"`.
+- Regular customers will never see an "Owner" button or admin trigger.
 
-### 📦 Clean Production Launch
-- Zero bundled demo products
-- Empty store = ready for real inventory
-- Auto-clears old cache when app version changes
+### 🛡️ Security Hardening
+- Plaintext password fallback strings have been purged from the client source code.
+- Admin authentication is verified using SHA-256 cryptographic hashes.
+- Single-admin enforcement prevents multiple simultaneous admin sessions using a 90-second heartbeat monitor.
 
 ---
 
-## 📦 Installation
+## 📦 Installation APKs
 
 | Download | Architecture | Recommended For |
 | :--- | :--- | :--- |
 | 📲 **app-arm64-v8a-release.apk** | `arm64-v8a` | Modern Android phones (2018+) — **Recommended** |
 | 📲 **app-armeabi-v7a-release.apk** | `armeabi-v7a` | Older 32-bit Android phones |
 | 📲 **app-x86_64-release.apk** | `x86_64` | Android Emulators & Chromebooks |
-
----
-
-## 🛠️ Developer Notes
-
-- Build triggered: push to `main` branch
-- CI: GitHub Actions (ubuntu-latest, Flutter 3.x)
-- Release created: `v3.4.1` with above release notes
 
 ---
 

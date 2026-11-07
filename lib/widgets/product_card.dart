@@ -341,21 +341,6 @@ class ProductCard extends StatelessWidget {
       ),
     );
 
-    // Completely grey out if out of stock
-    if (isOutOfStock) {
-      cardContent = ColorFiltered(
-        key: ValueKey('filter_${product.id}_out_of_stock'),
-        colorFilter: const ColorFilter.mode(
-          Colors.grey,
-          BlendMode.saturation,
-        ),
-        child: Opacity(
-          opacity: 0.65,
-          child: cardContent,
-        ),
-      );
-    }
-
     // Wrap with RepaintBoundary for fast scrolling GPU isolation
     return RepaintBoundary(child: cardContent);
   }

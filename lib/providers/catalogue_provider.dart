@@ -57,21 +57,12 @@ class CatalogueProvider with ChangeNotifier {
   }
 
   void _syncFromCloud(List<Product> cloudProducts) {
-    if (cloudProducts.isEmpty) return;
-
     if (_products.isNotEmpty) {
       _checkAndNotifyStockChanges(oldList: _products, newList: cloudProducts);
     }
 
-    // Safely merge: update products by ID without dropping existing catalogue items
-    final Map<String, Product> productMap = {
-      for (final p in _products) p.id: p,
-    };
-    for (final cp in cloudProducts) {
-      productMap[cp.id] = cp;
-    }
-
-    _products = productMap.values.toList();
+    // Mirror Firestore collection directly so added/edited/deleted products stay 100% in sync
+    _products = List<Product>.from(cloudProducts);
     unawaited(StorageService.saveProducts(_products));
     notifyListeners();
   }

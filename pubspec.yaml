@@ -1,7 +1,7 @@
 name: shalimar_store
 description: "Shalimar Store - Since 1988. Official General Store & Grocery App."
 publish_to: 'none'
-version: 3.4.4+16
+version: 3.4.5+17
 
 environment:
   sdk: ^3.13.7

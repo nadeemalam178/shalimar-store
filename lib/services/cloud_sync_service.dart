@@ -32,12 +32,6 @@ class CloudSyncService {
     try {
       _streamSub?.cancel();
       _streamSub = firestore.collection(_collectionPath).snapshots().listen((snapshot) {
-        if (snapshot.docs.isNotEmpty) hasSeenNonEmpty = true;
-        if (snapshot.docs.isEmpty && !hasSeenNonEmpty) {
-          debugPrint('ℹ️ [CloudSync] Firestore products collection is empty; preserving local catalog.');
-          return;
-        }
-
         final List<Product> cloudProducts = [];
         for (final doc in snapshot.docs) {
           try {

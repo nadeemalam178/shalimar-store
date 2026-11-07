@@ -121,11 +121,9 @@ class StorageService {
         // Corrupted cache — fallback to standard
       }
     }
-    final initial = await loadStandardKiranaCatalogue();
-    if (initial.isNotEmpty) {
-      await saveProducts(initial);
-    }
-    return initial;
+    // Only load standard catalogue if it's the very first time AND no cloud sync has happened yet
+    // Otherwise return empty list and let live CloudSync populate actual inventory
+    return [];
   }
 
   static Future<void> saveProducts(List<Product> products) async {
