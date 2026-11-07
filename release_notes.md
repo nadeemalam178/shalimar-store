@@ -1,56 +1,54 @@
-# 🛒 Shalimar Store v4.0.0 Release Notes
+# 🛒 Shalimar Store v4.1.0 — Major Feature Release
 
-**Shalimar Store (Est. 1988) — Official Mobile Application**  
-*Serving Trust, Quality & Purity on Ashok Raj Path, Alamganj, Patna — 800007, Bihar*
-
----
-
-## 🚀 What's New in Version 4.0.0 (Milestone Release)
-
-### 🧹 Fresh Catalogue Directory & Clean Session Reset
-- Upgrading to v4.0.0 clears all cached catalogue and category items, providing a completely fresh, empty directory so the store owner can add genuine store products from scratch.
-- Cleanly logs out all existing admin and customer sessions so everyone starts on a clean slate.
-
-### 🛡️ Production Security Hardening
-- **Strict Owner-Only Product Writes:** `/products/{productId}` in Firestore now strictly requires `isOwner()` credentials (`nadeemalam178@gmail.com`). Public writes are completely closed.
-- **Customer Privacy:** Customer documents (`/users/{userId}`) are private to their respective UID and the Store Owner. PII scraping and cross-user updates are blocked.
-- **Role Elevation Prevention:** Customers cannot modify or elevate their account role to `'owner'`.
-- **Eliminated Plaintext Passwords:** Removed all hardcoded credentials from the app binary; owner logs in authoritatively through Firebase Auth.
-
-### 📸 Samsung Camera LMK Crash Fix & Form Draft Recovery
-- Added `android:largeHeap="true"` and configured 1024x1024 @ 80% compression to prevent Android Low Memory Killer reloads on Samsung Galaxy devices.
-- Added background form draft persistence for product title, price, MRP, unit, category, and description so typed text is never lost when taking photos.
-
-### 🗂️ Dynamic Category Management
-- Added `ManageCategoriesDialog` in Admin Dashboard to create or delete categories on the fly.
-- Deleting a category automatically and safely reassigns all affected products to `"General"`.
-
-### ⚖️ Standardized Pack-Size Dropdown
-- Unified pack-size dropdown (`1 kg`, `500 gm`, `250 gm`, `1 Liter`, `500 ml`, `1 pc`, `1 Packet`, etc.) plus custom unit input.
-
-### 🔍 Hinglish & Colloquial Kirana Search
-- Native colloquial search matches Indian terms (`tel`, `atta`, `dal`, `chawal`, `chai`, `sabun`) to catalogue items.
-
-### 📦 Out-of-Stock Card Tap Handling
-- Fixed touch interception on greyed-out out-of-stock product cards so customers can tap to view details.
-
-### 📲 1-Tap WhatsApp Promotional Sharing
-- Added 1-tap WhatsApp sharing directly from Admin Dashboard with formatted pricing, savings, and store link.
-
-### 🖼️ Hardened Supabase Image Pipeline
-- Enforces 5 MB file size limit, MIME-type filtering, and binary magic-byte inspection (JPEG, PNG, WebP) to block non-image uploads.
-- Automatically cleans up image files in Supabase Storage when products are deleted.
+### 📅 Release Date: November 7, 2026
+### 🏬 Md. Jamil General Store (Since 1988), Alamganj, Ashok Rajpath, Patna - 800007
 
 ---
 
-## 📦 Installation APKs
+## 🌟 Highlights of this Release
 
-| Download | Architecture | Recommended For |
+### ✨ 1. Google Gemini Pro AI Hub
+- **Interactive Step-by-Step API Key Setup:** Added visual 4-step tutorial card in Admin Side Panel guiding the owner to acquire and paste their Gemini Pro API Key from Google AI Studio.
+- **Live Connection Ping:** Verifies the API key in real time against `gemini-1.5-pro` with live status banners (`🟢 Connected & Active` / `🔴 Verification Error`).
+- **📸 Vision "Photo-to-Product" Form Auto-Fill:** 1-tap snap of any grocery package automatically extracts Name, Category, Pack Unit, MRP, and Description directly into the Add/Edit Product form.
+- **📢 Automated Customer Push Notifications:** Gemini crafts tailored, high-converting Hinglish/English deals and festive announcements. Broadcasts are synced to Firestore `/broadcast_notifications` and trigger heads-up push alerts across all registered customer devices.
+- **🧾 Parchi & WhatsApp List Decoder:** Instantly parses handwritten customer parchis and unstructured WhatsApp grocery lists into itemized bills.
+- **📊 Smart Reorder Advisory:** Forecasts high-demand and out-of-stock items in the Analytics drawer.
+
+### 📲 2. Instant App Sharing with QR Code (arm64-v8a)
+- Available in both **Admin Side Panel** and **Customer Profile & Settings Dialog**.
+- Generates an instant, offline, high-contrast QR code targeting the latest stable Android `arm64-v8a` APK release.
+- Includes 1-tap **"Share via WhatsApp"** button with formatted message and direct APK link.
+- Includes 1-tap **"Copy Download Link"** and direct link to GitHub Releases.
+
+### 📊 3. Unified Admin Side Panel (Drawer)
+- Consolidates all administrative operations into a sleek, clean 4-tab side drawer, keeping the main dashboard distraction-free:
+  - **Tab 1 (Insights & CRM):** Registered customer directory with 1-tap WhatsApp chat/call, WhatsApp order receipt logs, and inventory health valuation.
+  - **Tab 2 (Gemini AI Hub):** API Key setup, connection verification, feature toggles, and AI push notifications copywriter.
+  - **Tab 3 (Share App):** Instant QR Code & direct APK sharing tools.
+  - **Tab 4 (Settings):** Store timings, customer delivery banner notice, and OTA update checks.
+- **Multi-Select Batch Operations:** Long-press enters Selection Mode to batch delete or batch reassign categories.
+
+### 🔍 4. Full-Screen Pinch-to-Zoom Image Viewer Everywhere
+- Reusable `FullScreenImageViewer` modal supporting 1x to 5x pinch zoom and double-tap zoom across:
+  - Customer Product Details multi-image gallery
+  - Customer Shopping Cart item thumbnails
+  - Storefront Heritage historical photos
+  - Admin Dashboard 50x50 product thumbnails
+  - Add/Edit Product photo previews
+
+### 🔒 5. Persistent Sessions (Zero Auto-Logout)
+- Active Admin and Customer sessions are preserved permanently across app updates and daily usage until explicit sign-out.
+
+### 📝 6. Option A Description Integrity
+- Only custom-entered descriptions appear in customer product details; empty descriptions remain completely hidden without boilerplate text.
+
+---
+
+## 📦 APK Downloads
+
+| Package | Architecture | Description |
 | :--- | :--- | :--- |
-| 📲 **app-arm64-v8a-release.apk** | `arm64-v8a` | Modern Android phones (2018+) — **Recommended** |
-| 📲 **app-armeabi-v7a-release.apk** | `armeabi-v7a` | Older 32-bit Android phones |
-| 📲 **app-x86_64-release.apk** | `x86_64` | Android Emulators & Chromebooks |
-
----
-
-*Built with ❤️ for Md. Jamil General Store (Est. 1988) — Patna, Bihar*
+| 📲 **[app-arm64-v8a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-arm64-v8a-release.apk)** | `arm64-v8a` | **Recommended:** Modern 64-bit Android smartphones |
+| 📲 **[app-armeabi-v7a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-armeabi-v7a-release.apk)** | `armeabi-v7a` | 32-bit legacy Android phones |
+| 📲 **[app-x86_64-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-x86_64-release.apk)** | `x86_64` | Android Emulators & Chromebooks |
