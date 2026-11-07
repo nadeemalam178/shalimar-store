@@ -49,14 +49,24 @@ class GeminiBroadcastDraft {
   });
 }
 
-/// Service providing Google Gemini 1.5 Pro AI features to Shalimar Store:
+/// Service providing Google Gemini 3.6 Flash & Next-Gen AI features to Shalimar Store:
 /// 1. API Key verification ping
 /// 2. Vision 1-Tap "Photo-to-Product" form auto-fill
 /// 3. Promotional customer broadcast copy generation
 /// 4. Parchi / Handwritten list itemization
 /// 5. Firestore `/broadcast_notifications` broadcasting
 class GeminiService {
-  static const String _primaryModel = 'gemini-1.5-pro';
+  /// Primary model: Gemini 3.6 Flash (highest speed, lowest latency, advanced multimodal reasoning)
+  static const String primaryModel = 'gemini-3.6-flash';
+
+  /// Cascade order for model availability: 3.6 Flash -> 2.5 Flash -> 2.0 Flash -> 1.5 Flash
+  static const List<String> _modelCascade = [
+    primaryModel,
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+  ];
+
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
 
   static FirebaseFirestore? get _firestore {
@@ -68,7 +78,15 @@ class GeminiService {
     }
   }
 
-  /// Verifies an API key with a fast, lightweight ping to Gemini 1.5 Pro
+  static String _formatModelDisplayName(String model) {
+    if (model.contains('3.6')) return 'Gemini 3.6 Flash';
+    if (model.contains('2.5')) return 'Gemini 2.5 Flash';
+    if (model.contains('2.0')) return 'Gemini 2.0 Flash';
+    if (model.contains('1.5')) return 'Gemini 1.5 Flash';
+    return model;
+  }
+
+  /// Verifies an API key with a fast, lightweight ping cascading from Gemini 3.6 Flash
   static Future<GeminiVerificationResult> verifyApiKey(String apiKey) async {
     final cleanKey = apiKey.trim();
     if (cleanKey.isEmpty) {
@@ -78,57 +96,74 @@ class GeminiService {
       );
     }
 
+    final client = HttpClient();
     try {
-      final client = HttpClient();
-      final uri = Uri.parse('$_baseUrl/$_primaryModel:generateContent?key=$cleanKey');
-      final request = await client.postUrl(uri);
-      request.headers.set('Content-Type', 'application/json');
-
-      final payload = jsonEncode({
-        'contents': [
-          {
-            'parts': [
-              {'text': 'Ping test. Reply with: OK'}
-            ]
-          }
-        ],
-        'generationConfig': {
-          'maxOutputTokens': 10,
-        }
-      });
-
-      request.write(payload);
-      final response = await request.close();
-      final body = await response.transform(utf8.decoder).join();
-      client.close();
-
-      if (response.statusCode == 200) {
-        return const GeminiVerificationResult(
-          success: true,
-          message: 'Connected to Gemini 1.5 Pro! AI Superpowers Active.',
-          modelName: _primaryModel,
-        );
-      } else {
-        String errMsg = 'Verification failed (Code ${response.statusCode})';
+      for (final model in _modelCascade) {
         try {
-          final json = jsonDecode(body) as Map<String, dynamic>;
-          if (json.containsKey('error') && json['error'] is Map) {
-            errMsg = json['error']['message'] ?? errMsg;
+          final uri = Uri.parse('$_baseUrl/$model:generateContent?key=$cleanKey');
+          final request = await client.postUrl(uri);
+          request.headers.set('Content-Type', 'application/json');
+
+          final payload = jsonEncode({
+            'contents': [
+              {
+                'parts': [
+                  {'text': 'Ping test. Reply with: OK'}
+                ]
+              }
+            ],
+            'generationConfig': {
+              'maxOutputTokens': 10,
+            }
+          });
+
+          request.write(payload);
+          final response = await request.close();
+          final body = await response.transform(utf8.decoder).join();
+
+          if (response.statusCode == 200) {
+            client.close();
+            final displayName = _formatModelDisplayName(model);
+            return GeminiVerificationResult(
+              success: true,
+              message: 'Connected to $displayName! AI Superpowers Active.',
+              modelName: model,
+            );
+          } else if (response.statusCode == 404) {
+            // Model not found on this tier/endpoint, fallback to next in cascade
+            continue;
+          } else {
+            client.close();
+            String errMsg = 'Verification failed (Code ${response.statusCode})';
+            try {
+              final json = jsonDecode(body) as Map<String, dynamic>;
+              if (json.containsKey('error') && json['error'] is Map) {
+                errMsg = json['error']['message'] ?? errMsg;
+              }
+            } catch (_) {}
+
+            if (response.statusCode == 400 || response.statusCode == 403) {
+              errMsg = 'Invalid API Key. Please verify key from Google AI Studio.';
+            } else if (response.statusCode == 429) {
+              errMsg = 'Quota limit reached on Google AI Studio. Check your billing tier.';
+            }
+
+            return GeminiVerificationResult(
+              success: false,
+              message: errMsg,
+            );
           }
-        } catch (_) {}
-
-        if (response.statusCode == 400 || response.statusCode == 403) {
-          errMsg = 'Invalid API Key. Please verify key from Google AI Studio.';
-        } else if (response.statusCode == 429) {
-          errMsg = 'Quota limit reached on Google AI Studio. Check your billing tier.';
+        } catch (_) {
+          continue;
         }
-
-        return GeminiVerificationResult(
-          success: false,
-          message: errMsg,
-        );
       }
+      client.close();
+      return const GeminiVerificationResult(
+        success: false,
+        message: 'Unable to connect to Gemini Flash models. Check your network or API key.',
+      );
     } catch (e) {
+      client.close();
       debugPrint('⚠️ [GeminiService] Ping error: $e');
       return GeminiVerificationResult(
         success: false,
@@ -145,15 +180,9 @@ class GeminiService {
     final apiKey = StorageService.getGeminiApiKey();
     if (apiKey.isEmpty) return null;
 
-    try {
-      final client = HttpClient();
-      final uri = Uri.parse('$_baseUrl/$_primaryModel:generateContent?key=$apiKey');
-      final request = await client.postUrl(uri);
-      request.headers.set('Content-Type', 'application/json');
+    final base64Image = base64Encode(imageBytes);
 
-      final base64Image = base64Encode(imageBytes);
-
-      final prompt = '''
+    final prompt = '''
 You are an expert grocery cataloguing assistant for Shalimar Store (Est. 1988).
 Analyze this grocery product image and return ONLY a valid JSON object with these exact keys:
 {
@@ -167,53 +196,69 @@ Analyze this grocery product image and return ONLY a valid JSON object with thes
 Output strictly valid JSON, no markdown tags or backticks.
 ''';
 
-      final payload = jsonEncode({
-        'contents': [
-          {
-            'parts': [
-              {'text': prompt},
-              {
-                'inlineData': {
-                  'mimeType': mimeType,
-                  'data': base64Image,
-                }
+    final payload = jsonEncode({
+      'contents': [
+        {
+          'parts': [
+            {'text': prompt},
+            {
+              'inlineData': {
+                'mimeType': mimeType,
+                'data': base64Image,
               }
-            ]
-          }
-        ],
-        'generationConfig': {
-          'temperature': 0.2,
-          'maxOutputTokens': 500,
+            }
+          ]
         }
-      });
-
-      request.write(payload);
-      final response = await request.close();
-      final responseBody = await response.transform(utf8.decoder).join();
-      client.close();
-
-      if (response.statusCode != 200) {
-        debugPrint('⚠️ [GeminiService] Vision failed with status ${response.statusCode}: $responseBody');
-        return null;
+      ],
+      'generationConfig': {
+        'temperature': 0.2,
+        'maxOutputTokens': 500,
       }
+    });
 
-      final jsonResp = jsonDecode(responseBody) as Map<String, dynamic>;
-      final rawText = jsonResp['candidates']?[0]?['content']?[0]?['text'] ??
-          jsonResp['candidates']?[0]?['content']?['parts']?[0]?['text'] ??
-          '';
+    final client = HttpClient();
+    try {
+      for (final model in _modelCascade) {
+        try {
+          final uri = Uri.parse('$_baseUrl/$model:generateContent?key=$apiKey');
+          final request = await client.postUrl(uri);
+          request.headers.set('Content-Type', 'application/json');
+          request.write(payload);
 
-      final cleanJson = _sanitizeJson(rawText);
-      final data = jsonDecode(cleanJson) as Map<String, dynamic>;
+          final response = await request.close();
+          final responseBody = await response.transform(utf8.decoder).join();
 
-      return GeminiProductExtraction(
-        name: data['name']?.toString() ?? '',
-        category: data['category']?.toString() ?? 'Daily Staples',
-        packSize: data['packSize']?.toString() ?? '1 Unit',
-        mrp: (data['mrp'] as num?)?.toDouble() ?? 0.0,
-        price: (data['price'] as num?)?.toDouble() ?? 0.0,
-        description: data['description']?.toString() ?? '',
-      );
+          if (response.statusCode == 200) {
+            client.close();
+            final jsonResp = jsonDecode(responseBody) as Map<String, dynamic>;
+            final rawText = jsonResp['candidates']?[0]?['content']?[0]?['text'] ??
+                jsonResp['candidates']?[0]?['content']?['parts']?[0]?['text'] ??
+                '';
+
+            final cleanJson = _sanitizeJson(rawText);
+            final data = jsonDecode(cleanJson) as Map<String, dynamic>;
+
+            return GeminiProductExtraction(
+              name: data['name']?.toString() ?? '',
+              category: data['category']?.toString() ?? 'Daily Staples',
+              packSize: data['packSize']?.toString() ?? '1 Unit',
+              mrp: (data['mrp'] as num?)?.toDouble() ?? 0.0,
+              price: (data['price'] as num?)?.toDouble() ?? 0.0,
+              description: data['description']?.toString() ?? '',
+            );
+          } else if (response.statusCode == 404) {
+            continue;
+          } else {
+            debugPrint('⚠️ [GeminiService] Vision failed with $model (status ${response.statusCode}): $responseBody');
+          }
+        } catch (_) {
+          continue;
+        }
+      }
+      client.close();
+      return null;
     } catch (e) {
+      client.close();
       debugPrint('⚠️ [GeminiService] Vision extraction error: $e');
       return null;
     }
@@ -266,11 +311,6 @@ Respond ONLY with a valid JSON array of objects:
 No other text, strictly valid JSON.
 ''';
 
-      final client = HttpClient();
-      final uri = Uri.parse('$_baseUrl/$_primaryModel:generateContent?key=$apiKey');
-      final request = await client.postUrl(uri);
-      request.headers.set('Content-Type', 'application/json');
-
       final payload = jsonEncode({
         'contents': [
           {
@@ -285,29 +325,43 @@ No other text, strictly valid JSON.
         }
       });
 
-      request.write(payload);
-      final response = await request.close();
-      final responseBody = await response.transform(utf8.decoder).join();
-      client.close();
+      final client = HttpClient();
+      for (final model in _modelCascade) {
+        try {
+          final uri = Uri.parse('$_baseUrl/$model:generateContent?key=$apiKey');
+          final request = await client.postUrl(uri);
+          request.headers.set('Content-Type', 'application/json');
+          request.write(payload);
 
-      if (response.statusCode != 200) {
-        debugPrint('⚠️ [GeminiService] Copywriting failed with status ${response.statusCode}');
-        return [];
+          final response = await request.close();
+          final responseBody = await response.transform(utf8.decoder).join();
+
+          if (response.statusCode == 200) {
+            client.close();
+            final jsonResp = jsonDecode(responseBody) as Map<String, dynamic>;
+            final rawText = jsonResp['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
+            final cleanJson = _sanitizeJson(rawText);
+            final list = jsonDecode(cleanJson) as List<dynamic>;
+
+            return list.map((item) {
+              final m = item as Map<String, dynamic>;
+              return GeminiBroadcastDraft(
+                title: m['title']?.toString() ?? 'Shalimar Store Special',
+                body: m['body']?.toString() ?? '',
+                category: m['category']?.toString() ?? 'All',
+              );
+            }).toList();
+          } else if (response.statusCode == 404) {
+            continue;
+          } else {
+            debugPrint('⚠️ [GeminiService] Copywriting failed with $model: status ${response.statusCode}');
+          }
+        } catch (_) {
+          continue;
+        }
       }
-
-      final jsonResp = jsonDecode(responseBody) as Map<String, dynamic>;
-      final rawText = jsonResp['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
-      final cleanJson = _sanitizeJson(rawText);
-      final list = jsonDecode(cleanJson) as List<dynamic>;
-
-      return list.map((item) {
-        final m = item as Map<String, dynamic>;
-        return GeminiBroadcastDraft(
-          title: m['title']?.toString() ?? 'Shalimar Store Special',
-          body: m['body']?.toString() ?? '',
-          category: m['category']?.toString() ?? 'All',
-        );
-      }).toList();
+      client.close();
+      return [];
     } catch (e) {
       debugPrint('⚠️ [GeminiService] Broadcast generation error: $e');
       return [];

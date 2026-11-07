@@ -85,7 +85,7 @@ class _AdminSidePanelDrawerState extends State<AdminSidePanelDrawer>
     _apiKeyCtrl = TextEditingController(text: StorageService.getGeminiApiKey());
     if (StorageService.isGeminiConfigured()) {
       _isKeyValid = true;
-      _keyVerificationMessage = 'Gemini 1.5 Pro: Active & Connected';
+      _keyVerificationMessage = 'Gemini 3.6 Flash: Active & Connected';
     }
 
     _bannerCtrl = TextEditingController(
@@ -736,7 +736,7 @@ class _AdminSidePanelDrawerState extends State<AdminSidePanelDrawer>
                     children: [
                       Text(
                         isConfigured
-                            ? 'Google Gemini 1.5 Pro: Active'
+                            ? 'Google Gemini 3.6 Flash: Active'
                             : 'Gemini Pro API Key Required',
                         style: TextStyle(
                           fontSize: 13,
@@ -1026,7 +1026,7 @@ class _AdminSidePanelDrawerState extends State<AdminSidePanelDrawer>
                       icon: _isGeneratingBroadcast
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.auto_awesome, size: 16),
-                      label: Text(_isGeneratingBroadcast ? 'Writing with Gemini 1.5 Pro...' : '✨ Generate AI Broadcast Options'),
+                      label: Text(_isGeneratingBroadcast ? 'Writing with Gemini 3.6 Flash...' : '✨ Generate AI Broadcast Options'),
                       onPressed: _isGeneratingBroadcast ? null : _generateAiBroadcastCopies,
                     ),
                   ),

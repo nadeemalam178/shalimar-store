@@ -392,7 +392,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('✨ Gemini Pro auto-filled product details successfully!'),
+              content: Text('✨ Gemini 3.6 Flash auto-filled product details successfully!'),
               backgroundColor: AppColors.success,
               behavior: SnackBarBehavior.floating,
             ),
