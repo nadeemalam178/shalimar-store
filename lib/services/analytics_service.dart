@@ -1,8 +1,10 @@
 import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/cart_item.dart';
 import '../models/product.dart';
 import '../models/user_model.dart';
@@ -66,7 +68,11 @@ class LoggedOrder {
       timestamp: json['timestamp'] != null
           ? DateTime.tryParse(json['timestamp'] as String) ?? DateTime.now()
           : DateTime.now(),
-      itemNames: (json['itemNames'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      itemNames:
+          (json['itemNames'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
     );
   }
 }
@@ -85,11 +91,15 @@ class AnalyticsService {
   }) async {
     final now = DateTime.now();
     final orderId = 'ORD-${now.millisecondsSinceEpoch.toString().substring(7)}';
-    final itemNames = items.map((i) => '${i.product.name} (x${i.quantity})').toList();
+    final itemNames = items
+        .map((i) => '${i.product.name} (x${i.quantity})')
+        .toList();
 
     final order = LoggedOrder(
       orderId: orderId,
-      customerName: customerName.isNotEmpty ? customerName : 'Shalimar Customer',
+      customerName: customerName.isNotEmpty
+          ? customerName
+          : 'Shalimar Customer',
       customerPhone: customerPhone,
       customerAddress: customerAddress,
       totalAmount: totalAmount,
@@ -119,7 +129,9 @@ class AnalyticsService {
         'userId': FirebaseAuth.instance.currentUser?.uid ?? 'guest',
         'createdAt': FieldValue.serverTimestamp(),
       });
-      debugPrint('📊 [AnalyticsService] Recorded WhatsApp order $orderId in Firestore');
+      debugPrint(
+        '📊 [AnalyticsService] Recorded WhatsApp order $orderId in Firestore',
+      );
     } catch (e) {
       debugPrint('ℹ️ [AnalyticsService] Firestore order sync error: $e');
     }
@@ -140,10 +152,17 @@ class AnalyticsService {
             data['uid'] = doc.id;
             return UserModel.fromJson(data);
           })
-          .where((u) => !u.isOwner && u.role.toLowerCase() != 'owner' && u.email.toLowerCase() != 'nadeemalam178@gmail.com')
+          .where(
+            (u) =>
+                !u.isOwner &&
+                u.role.toLowerCase() != 'owner' &&
+                u.email.toLowerCase() != 'nadeemalam178@gmail.com',
+          )
           .toList();
     } catch (e) {
-      debugPrint('⚠️ [AnalyticsService] Failed to fetch customers from Firestore: $e');
+      debugPrint(
+        '⚠️ [AnalyticsService] Failed to fetch customers from Firestore: $e',
+      );
       return [];
     }
   }
@@ -162,7 +181,9 @@ class AnalyticsService {
           deletedCount++;
         }
       }
-      debugPrint('🗑️ [AnalyticsService] Cleared $deletedCount customer records from Firestore.');
+      debugPrint(
+        '🗑️ [AnalyticsService] Cleared $deletedCount customer records from Firestore.',
+      );
       return deletedCount;
     } catch (e) {
       debugPrint('⚠️ [AnalyticsService] Customer cleanup error: $e');
@@ -184,7 +205,9 @@ class AnalyticsService {
           .timeout(const Duration(seconds: 6));
 
       if (snapshot.docs.isNotEmpty) {
-        orders = snapshot.docs.map((d) => LoggedOrder.fromJson(d.data())).toList();
+        orders = snapshot.docs
+            .map((d) => LoggedOrder.fromJson(d.data()))
+            .toList();
       }
     } catch (_) {}
 
@@ -194,13 +217,19 @@ class AnalyticsService {
         final prefs = await SharedPreferences.getInstance();
         final rawList = prefs.getStringList(_localOrdersKey) ?? [];
         orders = rawList
-            .map((r) => LoggedOrder.fromJson(jsonDecode(r) as Map<String, dynamic>))
+            .map(
+              (r) =>
+                  LoggedOrder.fromJson(jsonDecode(r) as Map<String, dynamic>),
+            )
             .toList();
       } catch (_) {}
     }
 
     final totalOrders = orders.length;
-    final totalRevenue = orders.fold<double>(0.0, (total, o) => total + o.totalAmount);
+    final totalRevenue = orders.fold<double>(
+      0.0,
+      (total, o) => total + o.totalAmount,
+    );
     final aov = totalOrders > 0 ? totalRevenue / totalOrders : 0.0;
 
     return OrderAnalyticsSummary(
@@ -212,11 +241,16 @@ class AnalyticsService {
   }
 
   /// Computes catalogue inventory metrics
-  static Map<String, dynamic> calculateInventoryMetrics(List<Product> products) {
+  static Map<String, dynamic> calculateInventoryMetrics(
+    List<Product> products,
+  ) {
     final totalItems = products.length;
     final inStock = products.where((p) => p.inStock).length;
     final outOfStock = totalItems - inStock;
-    final totalValuation = products.fold<double>(0.0, (total, p) => total + (p.price * (p.inStock ? 10 : 0)));
+    final totalValuation = products.fold<double>(
+      0.0,
+      (total, p) => total + (p.price * (p.inStock ? 10 : 0)),
+    );
 
     final Map<String, int> categoryCounts = {};
     for (final p in products) {
@@ -232,4 +266,3 @@ class AnalyticsService {
     };
   }
 }
-

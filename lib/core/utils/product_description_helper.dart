@@ -80,3 +80,4 @@ class ProductDescriptionHelper {
     return 'Trusted Quality Since 1988';
   }
 }
+
