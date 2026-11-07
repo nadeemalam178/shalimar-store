@@ -9,6 +9,27 @@ class InAppUpdateDialog extends StatefulWidget {
   final ReleaseUpdateInfo updateInfo;
   final bool autoStart;
 
+  static bool _hasPromptedThisSession = false;
+
+  /// Checks for OTA update and displays prompt dialog once per cold-start app session
+  static Future<void> checkAndPromptIfAvailable(BuildContext context) async {
+    if (_hasPromptedThisSession) return;
+    try {
+      final info = await UpdateService.checkForUpdate();
+      if (!info.hasUpdate) return;
+      if (!context.mounted) return;
+      _hasPromptedThisSession = true;
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => InAppUpdateDialog(
+          updateInfo: info,
+          autoStart: false,
+        ),
+      );
+    } catch (_) {}
+  }
+
   const InAppUpdateDialog({
     super.key,
     required this.updateInfo,

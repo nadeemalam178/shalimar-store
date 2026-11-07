@@ -367,7 +367,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 automaticallyImplyLeading: false,
                 backgroundColor: context.surfaceColor,
                 elevation: 0,
+                titleSpacing: 16,
                 title: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
                       padding: const EdgeInsets.all(2),
@@ -376,57 +378,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         shape: BoxShape.circle,
                       ),
                       child: const CircleAvatar(
-                        radius: 16,
+                        radius: 14,
                         backgroundColor: Colors.white,
                         backgroundImage: AssetImage(AppConstants.logoPath),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Admin Management',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: context.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'Shalimar Store Control Panel',
-                          style: TextStyle(fontSize: 10, color: context.textSecondary),
-                        ),
-                      ],
+                    const SizedBox(width: 8),
+                    Text(
+                      'Admin Panel',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: context.textPrimary,
+                      ),
                     ),
                   ],
                 ),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.dashboard_customize_rounded, color: AppColors.primary),
-                    tooltip: 'Shalimar Control Hub (Insights, Gemini AI, Share App)',
+                    tooltip: 'Control Hub (Insights, AI, QR, Settings)',
                     onPressed: () {
                       _scaffoldKey.currentState?.openEndDrawer();
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.category_outlined),
-                    tooltip: 'Manage Categories',
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => const ManageCategoriesDialog(),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.settings_outlined),
-                    tooltip: 'Store Settings & Password',
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => const StoreSettingsDialog(),
-                      );
                     },
                   ),
                   IconButton(
@@ -443,21 +416,63 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       );
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.logout_rounded,
-                      color: Colors.redAccent,
-                    ),
-                    tooltip: 'Sign Out Admin',
-                    onPressed: () async {
-                      await admin.logout();
-                      if (context.mounted) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                          (route) => false,
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert_rounded, color: context.textPrimary),
+                    tooltip: 'More Options',
+                    onSelected: (val) async {
+                      if (val == 'categories') {
+                        showDialog(
+                          context: context,
+                          builder: (_) => const ManageCategoriesDialog(),
                         );
+                      } else if (val == 'settings') {
+                        showDialog(
+                          context: context,
+                          builder: (_) => const StoreSettingsDialog(),
+                        );
+                      } else if (val == 'logout') {
+                        await admin.logout();
+                        if (context.mounted) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            (route) => false,
+                          );
+                        }
                       }
                     },
+                    itemBuilder: (ctx) => [
+                      const PopupMenuItem(
+                        value: 'categories',
+                        child: Row(
+                          children: [
+                            Icon(Icons.category_outlined, size: 18),
+                            SizedBox(width: 10),
+                            Text('Manage Categories', style: TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'settings',
+                        child: Row(
+                          children: [
+                            Icon(Icons.settings_outlined, size: 18),
+                            SizedBox(width: 10),
+                            Text('Store Settings & Password', style: TextStyle(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: 'logout',
+                        child: Row(
+                          children: [
+                            Icon(Icons.logout_rounded, size: 18, color: Colors.red),
+                            SizedBox(width: 10),
+                            Text('Sign Out Admin', style: TextStyle(fontSize: 13, color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -125,7 +125,7 @@ class AnalyticsService {
     }
   }
 
-  /// Fetches registered customers from Firestore
+  /// Fetches registered customers from Firestore (strictly excludes store owner)
   static Future<List<UserModel>> fetchRegisteredCustomers() async {
     try {
       final snapshot = await _firestore
@@ -134,14 +134,39 @@ class AnalyticsService {
           .get()
           .timeout(const Duration(seconds: 8));
 
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['uid'] = doc.id;
-        return UserModel.fromJson(data);
-      }).toList();
+      return snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            data['uid'] = doc.id;
+            return UserModel.fromJson(data);
+          })
+          .where((u) => !u.isOwner && u.role.toLowerCase() != 'owner' && u.email.toLowerCase() != 'nadeemalam178@gmail.com')
+          .toList();
     } catch (e) {
       debugPrint('⚠️ [AnalyticsService] Failed to fetch customers from Firestore: $e');
       return [];
+    }
+  }
+
+  /// Deletes all registered customer accounts from Firestore /users (resets customer count to 0)
+  static Future<int> clearAllRegisteredCustomers() async {
+    try {
+      final snapshot = await _firestore.collection('users').get();
+      int deletedCount = 0;
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final role = data['role']?.toString().toLowerCase() ?? '';
+        final email = data['email']?.toString().toLowerCase() ?? '';
+        if (role != 'owner' && email != 'nadeemalam178@gmail.com') {
+          await doc.reference.delete();
+          deletedCount++;
+        }
+      }
+      debugPrint('🗑️ [AnalyticsService] Cleared $deletedCount customer records from Firestore.');
+      return deletedCount;
+    } catch (e) {
+      debugPrint('⚠️ [AnalyticsService] Customer cleanup error: $e');
+      return 0;
     }
   }
 

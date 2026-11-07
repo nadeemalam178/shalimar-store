@@ -13,6 +13,7 @@ import '../../services/auth_service.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../admin/admin_login_overlay.dart';
 import '../customer/customer_main_screen.dart';
+import '../customer/dialogs/in_app_update_dialog.dart';
 import '../onboarding/welcome_onboarding_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -34,6 +35,16 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        InAppUpdateDialog.checkAndPromptIfAvailable(context);
+      }
+    });
+  }
 
   @override
   void dispose() {

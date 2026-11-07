@@ -5,7 +5,6 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/theme_extensions.dart';
 import '../../../providers/catalogue_provider.dart';
-import '../../../services/storage_service.dart';
 import '../../../services/update_service.dart';
 import '../../../widgets/product_card.dart';
 import '../dialogs/in_app_update_dialog.dart';
@@ -32,27 +31,7 @@ class _HomeCatalogTabState extends State<HomeCatalogTab> {
     final info = await UpdateService.checkForUpdate();
     if (mounted && info.hasUpdate) {
       setState(() => _updateInfo = info);
-      _showMiddleUpdateDialogFirstTime(info);
-    }
-  }
-
-  void _showMiddleUpdateDialogFirstTime(ReleaseUpdateInfo info) {
-    // Only auto-open the middle changelog dialog once per new version
-    final lastPrompted = StorageService.getLastPromptedUpdateVersion();
-    if (lastPrompted != info.latestVersion) {
-      StorageService.setLastPromptedUpdateVersion(info.latestVersion);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: true,
-            builder: (_) => InAppUpdateDialog(
-              updateInfo: info,
-              autoStart: false,
-            ),
-          );
-        }
-      });
+      InAppUpdateDialog.checkAndPromptIfAvailable(context);
     }
   }
 

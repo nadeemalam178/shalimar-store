@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_extensions.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/product_description_helper.dart';
 import '../../models/product.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/catalogue_provider.dart';
@@ -257,23 +258,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                   ),
 
-                  // Product Description (Only rendered if owner provided a custom description)
-                  if (product.description.trim().isNotEmpty) ...[
-                    const SizedBox(height: 18),
-                    const Text(
-                      'Product Details',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  // Product Description (Smart contextual description based on category and name)
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Product Details',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    ProductDescriptionHelper.getSmartDescription(product),
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.5,
+                      color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      product.description.trim(),
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.5,
-                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
-                      ),
-                    ),
-                  ],
+                  ),
                 ],
               ),
             ),

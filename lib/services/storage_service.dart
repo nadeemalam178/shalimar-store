@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +9,7 @@ import '../models/cart_item.dart';
 import '../models/order_model.dart';
 import '../models/product.dart';
 import '../models/user_profile.dart';
+import 'analytics_service.dart';
 
 class StorageService {
   static SharedPreferences? _prefs;
@@ -15,9 +17,27 @@ class StorageService {
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
 
-    // ── Persistent Sessions Across Updates ──
-    // Ensures that whenever the app updates, active admin and customer sessions
-    // are preserved permanently. Zero auto-logout on app updates.
+    // ── Version Migration: Force Sign Out All Sessions Once on v4.2.0 Update ──
+    final hasResetSession = _prefs?.getBool('v4_2_force_signout_fresh') ?? false;
+    if (!hasResetSession) {
+      await _prefs?.setBool(AppConstants.keyAdminSessionActive, false);
+      await _prefs?.remove(AppConstants.keyAdminLoginTimestamp);
+      await _prefs?.remove(AppConstants.keyAdminDeviceId);
+      await _prefs?.remove(AppConstants.keyUsername);
+      try {
+        await FirebaseAuth.instance.signOut();
+      } catch (_) {}
+      await _prefs?.setBool('v4_2_force_signout_fresh', true);
+      debugPrint('🧹 [StorageService] v4.2 Force sign-out applied: Signed out all users for clean update.');
+    }
+
+    // ── Clear all previous customer records from Firestore once ──
+    final hasClearedCustomers = _prefs?.getBool('v4_2_customers_cleared') ?? false;
+    if (!hasClearedCustomers) {
+      unawaited(AnalyticsService.clearAllRegisteredCustomers());
+      await _prefs?.setBool('v4_2_customers_cleared', true);
+    }
+
     await _prefs?.setString('app_version', AppConstants.appVersion);
   }
 

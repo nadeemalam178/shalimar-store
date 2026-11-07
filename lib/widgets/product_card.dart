@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
 import '../core/utils/currency_formatter.dart';
+import '../core/utils/product_description_helper.dart';
 import '../models/product.dart';
 import '../providers/cart_provider.dart';
 import '../providers/user_provider.dart';
@@ -51,7 +52,7 @@ class ProductCard extends StatelessWidget {
             children: [
               // Product Image with Hero animation & constrained cache (Tapping opens detail view)
               Expanded(
-                flex: 5,
+                flex: 6,
                 child: InkWell(
                   onTap: () {
                     Navigator.push(
@@ -64,6 +65,7 @@ class ProductCard extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
                   child: Container(
                     width: double.infinity,
+                    height: double.infinity,
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF252525) : AppColors.surfaceVariant.withValues(alpha: 0.6),
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
@@ -81,7 +83,7 @@ class ProductCard extends StatelessWidget {
 
               // Product Info & Price
               Expanded(
-                flex: 6,
+                flex: 5,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   child: Column(
@@ -112,7 +114,7 @@ class ProductCard extends StatelessWidget {
                               child: Text(
                                 product.unit,
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                   color: isDark
                                       ? Colors.grey.shade400
@@ -122,7 +124,7 @@ class ProductCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 3),
                             // Name
                             Text(
                               product.name,
@@ -132,9 +134,20 @@ class ProductCard extends StatelessWidget {
                                 color: isDark
                                     ? Colors.white
                                     : (isOutOfStock ? Colors.grey.shade500 : AppColors.darkText),
-                                height: 1.2,
+                                height: 1.15,
                               ),
-                              maxLines: 2,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            // Smart short description
+                            Text(
+                              ProductDescriptionHelper.getShortTagline(product),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                              ),
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],

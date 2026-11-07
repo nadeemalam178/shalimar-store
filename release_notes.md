@@ -1,47 +1,36 @@
-# 🛒 Shalimar Store v4.1.0 — Major Feature Release
+# 🛒 Shalimar Store v4.2.0 — Product Cards Overhaul & Startup OTA Prompt
 
 ### 📅 Release Date: November 7, 2026
 ### 🏬 Md. Jamil General Store (Since 1988), Alamganj, Ashok Rajpath, Patna - 800007
 
 ---
 
-## 🌟 Highlights of this Release
+## 🌟 What's New in v4.2.0
 
-### ✨ 1. Google Gemini Pro AI Hub
-- **Interactive Step-by-Step API Key Setup:** Added visual 4-step tutorial card in Admin Side Panel guiding the owner to acquire and paste their Gemini Pro API Key from Google AI Studio.
-- **Live Connection Ping:** Verifies the API key in real time against `gemini-1.5-pro` with live status banners (`🟢 Connected & Active` / `🔴 Verification Error`).
-- **📸 Vision "Photo-to-Product" Form Auto-Fill:** 1-tap snap of any grocery package automatically extracts Name, Category, Pack Unit, MRP, and Description directly into the Add/Edit Product form.
-- **📢 Automated Customer Push Notifications:** Gemini crafts tailored, high-converting Hinglish/English deals and festive announcements. Broadcasts are synced to Firestore `/broadcast_notifications` and trigger heads-up push alerts across all registered customer devices.
-- **🧾 Parchi & WhatsApp List Decoder:** Instantly parses handwritten customer parchis and unstructured WhatsApp grocery lists into itemized bills.
-- **📊 Smart Reorder Advisory:** Forecasts high-demand and out-of-stock items in the Analytics drawer.
+### 🚀 1. Automatic Startup OTA Update Prompt
+- **Instant Cold-Start Detection:** As soon as the app opens — whether on the **Login Screen** or already **Logged In** on the Main Catalog — the app instantly queries GitHub Releases for updates.
+- **One-Tap In-App Modal:** Directly presents `InAppUpdateDialog` with changelog and a one-tap download button that streams and installs the device-matched `arm64-v8a` APK.
+- **Session-Aware Frequency:** Prompts on every fresh app launch when an update is available without repeatedly popping up when switching tabs during an active session.
 
-### 📲 2. Instant App Sharing with QR Code (arm64-v8a)
-- Available in both **Admin Side Panel** and **Customer Profile & Settings Dialog**.
-- Generates an instant, offline, high-contrast QR code targeting the latest stable Android `arm64-v8a` APK release.
-- Includes 1-tap **"Share via WhatsApp"** button with formatted message and direct APK link.
-- Includes 1-tap **"Copy Download Link"** and direct link to GitHub Releases.
+### 🖼️ 2. Customer Product Cards & Smart Kirana Descriptions
+- **60% Image Flex Height:** Product card layout enhanced with a 60/40 ratio (`flex: 6` image, `flex: 5` info) so grocery photos fill the upper card without being squished.
+- **Contextual Grocery Taglines:** Dynamic kirana taglines displayed on cards (e.g., *"Chakki Fresh Atta • 100% Whole Wheat"*, *"Premium Basmati & Pulav Rice"*, *"Pure Desi Danedar Ghee"*, *"Authentic Indian Spice"*).
+- **Smart Product Details Fallback:** When a product doesn't have a custom description, `ProductDescriptionHelper` automatically generates a clean, mouthwatering Hindi/English grocery description based on its name and category.
 
-### 📊 3. Unified Admin Side Panel (Drawer)
-- Consolidates all administrative operations into a sleek, clean 4-tab side drawer, keeping the main dashboard distraction-free:
-  - **Tab 1 (Insights & CRM):** Registered customer directory with 1-tap WhatsApp chat/call, WhatsApp order receipt logs, and inventory health valuation.
-  - **Tab 2 (Gemini AI Hub):** API Key setup, connection verification, feature toggles, and AI push notifications copywriter.
-  - **Tab 3 (Share App):** Instant QR Code & direct APK sharing tools.
-  - **Tab 4 (Settings):** Store timings, customer delivery banner notice, and OTA update checks.
-- **Multi-Select Batch Operations:** Long-press enters Selection Mode to batch delete or batch reassign categories.
+### 🧹 3. Streamlined Admin Dashboard Header
+- **Clutter-Free Top Row:** Completely overhauled the Admin Dashboard AppBar, removing crowded and overlapping icon buttons.
+- **Clean Action Architecture:** Fast access to **Customer Storefront** (`Icons.storefront_rounded`), **Gemini AI Hub** (`Icons.dashboard_customize_rounded`), and a clean 3-dot overflow menu for **Category Management**, **Store Settings**, and **Secure Sign Out**.
 
-### 🔍 4. Full-Screen Pinch-to-Zoom Image Viewer Everywhere
-- Reusable `FullScreenImageViewer` modal supporting 1x to 5x pinch zoom and double-tap zoom across:
-  - Customer Product Details multi-image gallery
-  - Customer Shopping Cart item thumbnails
-  - Storefront Heritage historical photos
-  - Admin Dashboard 50x50 product thumbnails
-  - Add/Edit Product photo previews
+### 🔒 4. Admin Mode Top-Left Constraint
+- Prevents accidental customer profile popups when operating in Store Owner / Admin mode.
+- Top-left profile trigger is active exclusively in Customer browsing mode.
 
-### 🔒 5. Persistent Sessions (Zero Auto-Logout)
-- Active Admin and Customer sessions are preserved permanently across app updates and daily usage until explicit sign-out.
+### 🔄 5. Fresh Migration (Clean Sign-Out on Update)
+- First launch of `v4.2.0` automatically performs a clean sign-out migration for both Admin and Customer sessions so all users start fresh.
 
-### 📝 6. Option A Description Integrity
-- Only custom-entered descriptions appear in customer product details; empty descriptions remain completely hidden without boilerplate text.
+### 👥 6. Customer Directory Reset & Owner Exclusion
+- Fixed customer count metrics in the Admin Side Panel to strictly exclude the store owner (`nadeemalam178@gmail.com`).
+- Added a 1-tap **"Reset Directory (Reset to 0)"** action in the Admin Drawer for instantaneous customer list cleanup.
 
 ---
 
@@ -49,6 +38,6 @@
 
 | Package | Architecture | Description |
 | :--- | :--- | :--- |
-| 📲 **[app-arm64-v8a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-arm64-v8a-release.apk)** | `arm64-v8a` | **Recommended:** Modern 64-bit Android smartphones |
+| 📲 **[app-arm64-v8a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-arm64-v8a-release.apk)** | `arm64-v8a` | **Recommended:** Modern 64-bit Android smartphones (95%+ devices) |
 | 📲 **[app-armeabi-v7a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-armeabi-v7a-release.apk)** | `armeabi-v7a` | 32-bit legacy Android phones |
 | 📲 **[app-x86_64-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-x86_64-release.apk)** | `x86_64` | Android Emulators & Chromebooks |

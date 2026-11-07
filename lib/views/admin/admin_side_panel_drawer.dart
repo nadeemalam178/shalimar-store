@@ -476,10 +476,49 @@ class _AdminSidePanelDrawerState extends State<AdminSidePanelDrawer>
                     color: context.textPrimary,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  tooltip: 'Refresh',
-                  onPressed: _fetchInsightsData,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.delete_sweep_outlined, size: 18, color: Colors.redAccent),
+                      tooltip: 'Clear All Customers (Reset to 0)',
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: context.surfaceColor,
+                            title: const Text('Reset Customer Directory?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            content: const Text('Are you sure you want to delete all registered customer accounts? This will set the customer count to 0.'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text('Reset to 0', style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          await AnalyticsService.clearAllRegisteredCustomers();
+                          await _fetchInsightsData();
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('✅ All previous customers deleted. Count reset to 0.'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      tooltip: 'Refresh',
+                      onPressed: _fetchInsightsData,
+                    ),
+                  ],
                 ),
               ],
             ),

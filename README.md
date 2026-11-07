@@ -2,17 +2,17 @@
   <img src="assets/images/logo.png" width="140" alt="Shalimar Store Logo" />
 </p>
 
-<h1 align="center">🛒 Shalimar Store — Since 1988 (v4.1.0)</h1>
+<h1 align="center">🛒 Shalimar Store — Since 1988 (v4.2.0)</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v4.1.0-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-v4.2.0-crimson" alt="Version" />
+  <img src="https://img.shields.io/badge/OTA-Startup%20Auto%20Prompt-brightgreen" alt="Startup OTA" />
   <img src="https://img.shields.io/badge/Gemini%20Pro-AI%20Hub%20Active-8E24AA?logo=google&logoColor=white" alt="Gemini Pro AI" />
   <img src="https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
   <img src="https://img.shields.io/badge/Supabase-Storage%20Images-3ECF8E?logo=supabase&logoColor=white" alt="Supabase Storage" />
   <img src="https://img.shields.io/badge/QR%20Code-Instant%20App%20Sharing-blue" alt="QR Code" />
   <img src="https://img.shields.io/badge/Flutter-3.47+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Dart-3.13+-0175C2?logo=dart&logoColor=white" alt="Dart" />
-  <img src="https://img.shields.io/badge/OTA-arm64--v8a%20Direct%20OTA-brightgreen" alt="OTA Updates" />
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
 </p>
 
@@ -30,39 +30,40 @@ Established in **1988** by Mohammad Jamil, **Shalimar General Store** has been a
 
 ---
 
-## 🚀 What's New in v4.1.0 (Major Release)
+## 🚀 What's New in v4.2.0
 
-### ✨ Google Gemini Pro AI Hub
-- **Dedicated Step-by-Step Onboarding Guide:** Clear 4-step tutorial in the Admin Side Panel guiding the owner to acquire their Gemini Pro API Key directly from Google AI Studio.
-- **Live Connection Ping:** Verifies the API key in real time against Google's Generative Language API (`gemini-1.5-pro`) with clear status indicators.
-- **📸 Vision "Photo-to-Product" Auto-Fill:** 1-tap snap of any grocery item automatically fills product name, category, pack size/unit, MRP, and description.
-- **📢 Automated Customer Push Notifications:** Gemini crafts engaging Hinglish/English festive deals, daily staples discounts, and fresh stock alerts. Broadcasts are saved to Firestore `/broadcast_notifications` and trigger real-time heads-up push notifications on all registered customer devices.
-- **🧾 Parchi & WhatsApp List Decoder:** Seamless parsing of handwritten grocery chits and unstructured WhatsApp grocery lists.
+### ⚡ Automatic Startup OTA Update Prompt
+- **Cold-Start Check on Launch:** Automatically checks for GitHub releases when opening the app, whether on the **Login Screen** or the **Customer Main Screen**.
+- **Instant In-App Update Modal:** Displays `InAppUpdateDialog` with changelog and direct 1-tap download & install of the architecture-matching APK (`arm64-v8a`).
 
-### 📲 Instant App Sharing with QR Code (arm64-v8a)
-- Available in both **Admin Side Panel** and **Customer Profile & Settings**.
-- Generates an offline high-contrast QR code targeting the latest stable release: `https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-arm64-v8a-release.apk`.
-- Includes 1-tap **"Share via WhatsApp"** and **"Copy Download Link"** buttons.
+### 🛍️ Customer Product Cards Overhaul & Smart Kirana Descriptions
+- **60% Image Flex Ratio:** Product photos occupy 60% of the card height (`flex: 6`), giving products a rich, expansive, modern grocery storefront appearance.
+- **Contextual Grocery Taglines:** Dynamic kirana subtitle taglines on cards (e.g., *"Chakki Fresh Atta • 100% Whole Wheat"*, *"Premium Basmati & Pulav Rice"*, *"Pure Desi Danedar Ghee"*, *"Authentic Indian Spice"*).
+- **Smart Description Fallback:** Generates authentic Hindi/English product descriptions based on name and category whenever custom descriptions are left blank.
 
-### 📊 Unified Admin Side Panel (Drawer)
-- Consolidates Store Insights & CRM, Gemini Pro AI Hub, App Sharing QR, and Store Settings into 4 organized tabs, keeping the main dashboard clean and clutter-free.
-- **Customer CRM Directory:** Real-time customer list with 1-tap WhatsApp chat, direct phone call, and delivery addresses.
-- **WhatsApp Order Intelligence:** Tracks customer order submissions, estimated store revenue, and recent receipts.
-- **Batch Product Operations:** Long-press multi-select to batch delete or batch move products to any department.
+### 🧹 Streamlined Admin Dashboard Top Bar
+- Removed clutter and overlapping icon buttons from the Admin AppBar.
+- Fast access to Storefront View, Gemini Pro AI Hub drawer, and a clean overflow menu for Store Categories, Settings, and Sign Out.
 
-### 🔍 Full-Screen Pinch-to-Zoom Image Viewer Everywhere
-- Reusable `FullScreenImageViewer` modal supporting 1x to 5x pinch zoom and double-tap zoom across:
-  - Customer Product Detail screen (multi-image gallery)
-  - Customer Shopping Cart item thumbnails
-  - Store Heritage storefront photos
-  - Admin Dashboard 50x50 product thumbnails
-  - Add/Edit Product photo previews
+### 🔒 Admin Mode Context Constraint
+- Top-left profile side drawer is constrained in Admin mode so customer details never interfere with store management.
 
-### 🔒 Persistent Sessions (Zero Auto-Logout)
-- Active Admin and Customer sessions remain persistently logged in across app updates and daily usage until explicit sign-out.
+### 🔄 Fresh Session Migration (Sign Out on Update)
+- Upgrading to `v4.2.0` automatically performs a clean sign-out migration across Admin and Customer sessions to ensure a fresh, consistent local state.
 
-### 📝 Option A Description Integrity
-- Only custom-entered descriptions are shown in customer product details; empty descriptions remain cleanly hidden.
+### 👥 Customer Directory Reset & Owner Exclusion
+- Fixed customer count metrics to exclude the store owner (`nadeemalam178@gmail.com`).
+- Added a 1-tap **"Reset Directory (Reset to 0)"** button in the Admin Side Panel.
+
+---
+
+## ✨ Flagship Capabilities
+
+- **✨ Google Gemini Pro AI Hub:** Vision "Photo-to-Product" form auto-fill, automated customer push notifications via Firestore, parchi/WhatsApp list decoder, and smart reordering advisor.
+- **📲 Instant App Sharing with QR Code (arm64-v8a):** Offline high-contrast QR code and 1-tap WhatsApp sharing in both Admin Drawer and Customer Profile.
+- **🔍 Full-Screen Pinch-to-Zoom Image Viewer:** Pinch zoom (1x to 5x) across customer galleries, shopping carts, storefront photos, and admin dashboards.
+- ** Google Firebase Firestore Sync:** Real-time bi-directional catalog synchronization between store owner and customer devices.
+- **⚡ Zero-Fee UPI & WhatsApp Orders:** Instant WhatsApp grocery dispatch and direct zero-gateway-fee UPI QR payments.
 
 ---
 
@@ -70,9 +71,9 @@ Established in **1988** by Mohammad Jamil, **Shalimar General Store** has been a
 
 | Download | Architecture | Recommended For |
 | :--- | :--- | :--- |
-| 📲 **[app-arm64-v8a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest)** | `arm64-v8a` | Modern Android phones (2018+) — **Recommended** |
-| 📲 **[app-armeabi-v7a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest)** | `armeabi-v7a` | Older 32-bit Android phones |
-| 📲 **[app-x86_64-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest)** | `x86_64` | Android Emulators & Chromebooks |
+| 📲 **[app-arm64-v8a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-arm64-v8a-release.apk)** | `arm64-v8a` | Modern Android phones (2018+) — **Recommended** |
+| 📲 **[app-armeabi-v7a-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-armeabi-v7a-release.apk)** | `armeabi-v7a` | Older 32-bit Android phones |
+| 📲 **[app-x86_64-release.apk](https://github.com/nadeemalam178/Shalimar-Store/releases/latest/download/app-x86_64-release.apk)** | `x86_64` | Android Emulators & Chromebooks |
 
 ---
 

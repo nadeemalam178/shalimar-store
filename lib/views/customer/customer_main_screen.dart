@@ -128,15 +128,17 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Left: User Greeting & Profile Shortcut
+            // Left: User Greeting & Profile Shortcut (Only clickable in Customer mode)
             Flexible(
               child: InkWell(
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => const ProfileDialog(),
-                  );
-                },
+                onTap: admin.isLoggedIn
+                    ? null
+                    : () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => const ProfileDialog(),
+                        );
+                      },
                 borderRadius: BorderRadius.circular(24),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
